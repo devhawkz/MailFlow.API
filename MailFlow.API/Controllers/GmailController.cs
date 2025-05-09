@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Google.Apis.Auth.OAuth2;
+using Google.Apis.Gmail.v1;
+using Google.Apis.Util.Store;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MailFlow.API.Controllers
@@ -16,9 +19,10 @@ namespace MailFlow.API.Controllers
         [HttpGet("authorize")]
         public async Task<IActionResult> Authorize()
         {
-            var clientId = _config["Gmail:ClientId"];
-            var clientSecret = _config["Gmail:ClientSecret"];
+            var clientId = _config["GmailClientId"];
+            var clientSecret = _config["GmailClientSecret"];
 
+            // find a better way to check this conditions
             if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
                 return BadRequest("Gmail ClientId or ClientSecret is missing.");
 
@@ -29,12 +33,13 @@ namespace MailFlow.API.Controllers
                     ClientSecret = clientSecret
                 },
                 new[] { GmailService.Scope.GmailReadonly },
-                "user",
+                "user", //location where the token will be stored is associated with this identifier
                 CancellationToken.None,
-                new FileDataStore("Gmail.Auth.Store", true)
+                new FileDataStore("Gmail.Auth.Store", true) // name of the folder where the token will be stored and token file location
             );
-
-            await credential.RefreshTokenAsync(CancellationToken.None);
+            
+            // sends a request to Google API to get new access token only when access token is nearly expired, in other case it doesn't send a request to Google API
+            await credential.RefreshTokenAsync(CancellationToken.None); 
 
             return Ok(new
             {
@@ -50,8 +55,8 @@ namespace MailFlow.API.Controllers
         [HttpGet("check-secrets")]
         public IActionResult CheckSecrets()
         {
-           var clientId = _config["Gmail:ClientId"];
-           var clientSecret = _config["Gmail:ClientSecret"];
+           var clientId = _config["GmailClientId"];
+           var clientSecret = _config["GmailClientSecret"];
            return Ok(new { clientId, clientSecret });
         }
     }

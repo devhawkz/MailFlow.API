@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 
 client_secret.json
+Gmail.Auth.Store
