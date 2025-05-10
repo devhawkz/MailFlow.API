@@ -4,6 +4,7 @@ using MailFlow.API.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MailFlow.API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250510090600_RemovedNavProperties")]
+    partial class RemovedNavProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,12 +54,7 @@ namespace MailFlow.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("EmailMessages");
                 });
@@ -78,12 +76,7 @@ namespace MailFlow.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("GoogleTokens");
                 });
@@ -96,48 +89,11 @@ namespace MailFlow.API.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("02d9cd73-990c-437c-827b-fac07e08ba09"),
-                            Email = "pavlejovanovic34@gmail.com"
-                        });
-                });
-
-            modelBuilder.Entity("MailFlow.API.Controllers.EmailMessage", b =>
-                {
-                    b.HasOne("MailFlow.API.Controllers.User", "User")
-                        .WithMany("EmailMessages")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("MailFlow.API.Controllers.GoogleToken", b =>
-                {
-                    b.HasOne("MailFlow.API.Controllers.User", "User")
-                        .WithMany("GoogleTokens")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("MailFlow.API.Controllers.User", b =>
-                {
-                    b.Navigation("EmailMessages");
-
-                    b.Navigation("GoogleTokens");
                 });
 #pragma warning restore 612, 618
         }

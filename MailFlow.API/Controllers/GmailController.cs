@@ -13,9 +13,11 @@ namespace MailFlow.API.Controllers
     public class GmailController : ControllerBase
     {
         private readonly IConfiguration _config;
-        public GmailController(IConfiguration config)
+        private readonly DataContext _context;
+        public GmailController(IConfiguration config, DataContext context)
         {
             _config = config;
+            _context = context;
         }
 
         [HttpGet("authorize")]
@@ -35,31 +37,44 @@ namespace MailFlow.API.Controllers
                     ClientSecret = clientSecret
                 },
                 new[] { GmailService.Scope.GmailReadonly },
-                "user", //location where the token will be stored is associated with this identifier
-                CancellationToken.None,
-                new FileDataStore("Gmail.Auth.Store", true) // name of the folder where the token will be stored and token file location
+                "user", 
+                CancellationToken.None
             );
-            
+
+            var userId = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09");
+
             // sends a request to Google API to get new access token only when access token is nearly expired, in other case it doesn't send a request to Google API
-            await credential.RefreshTokenAsync(CancellationToken.None); 
+            await credential.RefreshTokenAsync(CancellationToken.None);           
 
-            return Ok(new
+            var expiresAt = DateTime.UtcNow.AddSeconds(credential.Token.ExpiresInSeconds ?? 3600);
+
+            var existing = await _context.GoogleTokens
+                .FirstOrDefaultAsync(t => t.UserId == userId);
+
+            if (existing != null)
             {
-                AccessToken = credential.Token.AccessToken,
-                RefreshToken = credential.Token.RefreshToken,
-                TokenType = credential.Token.TokenType,
-                ExpiresIn = credential.Token.ExpiresInSeconds,
-                Issued = credential.Token.IssuedUtc
-            });
-        }
+                existing.AccessToken = credential.Token.AccessToken;
+                existing.RefreshToken = credential.Token.RefreshToken;
+                existing.ExpiresAt = expiresAt;
+            }
+            else
+            {
+                var newToken = new GoogleToken
+                {
+                    Id = Guid.NewGuid(),
+                    AccessToken = credential.Token.AccessToken,
+                    RefreshToken = credential.Token.RefreshToken,
+                    ExpiresAt = expiresAt,
+                    UserId = userId // assuming you have a user ID to associate with the token
+                };
+                await _context.GoogleTokens.AddAsync(newToken);
 
+                
+            }
 
-        [HttpGet("check-secrets")]
-        public IActionResult CheckSecrets()
-        {
-           var clientId = _config["GmailClientId"];
-           var clientSecret = _config["GmailClientSecret"];
-           return Ok(new { clientId, clientSecret });
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
     }
 
@@ -70,8 +85,8 @@ namespace MailFlow.API.Controllers
         public string RefreshToken { get; set; }
         public DateTime ExpiresAt { get; set; }
 
-        public Guid UserId { get; set; }
-        public User User { get; set; } // navigation property
+        public Guid UserId { get; set; } // foreign key to User table
+        public User User { get; set; } // navigation property to User table
     }
 
     public class  EmailMessage
@@ -86,8 +101,8 @@ namespace MailFlow.API.Controllers
         // JSON list of Gmail label ids, enables us to save original Gmail label ids for each email (in json format) in order to be able to filter, search, group emails by labels
         public string LabelIdJson { get; set; }
         
-        public Guid UserId { get; set; }
-        public User User { get; set; } // navigation property
+        public Guid UserId { get; set; } // foreign key to User table
+        public User User { get; set; } // navigation property to User table
     }
 
     public class User
@@ -95,8 +110,8 @@ namespace MailFlow.API.Controllers
         public Guid Id { get; set; }
         public string Email { get; set; }
 
-        public ICollection<GoogleToken> GoogleTokens { get; set; } = new List<GoogleToken>();
-        public ICollection<EmailMessage> EmailMessages { get; set; } = new List<EmailMessage>();
+        public ICollection<GoogleToken> GoogleTokens { get; set; }
+        public ICollection<EmailMessage> EmailMessages { get; set; }
     }
 
 
@@ -111,6 +126,26 @@ namespace MailFlow.API.Controllers
         public DbSet<GoogleToken> GoogleTokens { get; set; }
         public DbSet<EmailMessage> EmailMessages { get; set; }
         public DbSet<User> Users { get; set; }
+
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(u => u.Id);
+
+                entity.Property(u => u.Email).IsRequired().HasMaxLength(255);
+
+                entity.HasData(new User
+                {
+                    Id = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09"),
+                    Email = "pavlejovanovic34@gmail.com"
+                });
+
+            });
+        }
     }
 
 }
