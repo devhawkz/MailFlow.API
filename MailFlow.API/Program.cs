@@ -1,8 +1,16 @@
+using MailFlow.API.Controllers;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 //enabling reading secrets from user secrets
 builder.Configuration.AddUserSecrets<Program>();
+
+
+
+builder.Services.AddDbContext<DataContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("sqlConnection")));
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
