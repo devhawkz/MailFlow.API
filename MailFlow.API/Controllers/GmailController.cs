@@ -3,6 +3,8 @@ using Google.Apis.Gmail.v1;
 using Google.Apis.Util.Store;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 
 namespace MailFlow.API.Controllers
 {
@@ -60,4 +62,55 @@ namespace MailFlow.API.Controllers
            return Ok(new { clientId, clientSecret });
         }
     }
+
+    public class GoogleToken
+    {
+        public Guid Id { get; set; }
+        public string AccessToken { get; set; }
+        public string RefreshToken { get; set; }
+        public DateTime ExpiresAt { get; set; }
+
+        public Guid UserId { get; set; }
+        public User User { get; set; } // navigation property
+    }
+
+    public class  EmailMessage
+    {
+        public Guid Id { get; set; }
+        public string GmailMessageId { get; set; }
+        public string Subject { get; set; }
+        public string From { get; set; }
+        public string Snippet { get; set; }
+        public DateTime ReceivedAt { get; set; }
+
+        // JSON list of Gmail label ids, enables us to save original Gmail label ids for each email (in json format) in order to be able to filter, search, group emails by labels
+        public string LabelIdJson { get; set; }
+        
+        public Guid UserId { get; set; }
+        public User User { get; set; } // navigation property
+    }
+
+    public class User
+    {
+        public Guid Id { get; set; }
+        public string Email { get; set; }
+
+        public ICollection<GoogleToken> GoogleTokens { get; set; } = new List<GoogleToken>();
+        public ICollection<EmailMessage> EmailMessages { get; set; } = new List<EmailMessage>();
+    }
+
+
+
+    public class DataContext : DbContext
+    {
+        public DataContext(DbContextOptions<DataContext> options) : base(options)
+        {
+           
+        }
+
+        public DbSet<GoogleToken> GoogleTokens { get; set; }
+        public DbSet<EmailMessage> EmailMessages { get; set; }
+        public DbSet<User> Users { get; set; }
+    }
+
 }
