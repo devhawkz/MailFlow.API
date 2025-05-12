@@ -125,6 +125,9 @@ namespace MailFlow.API.Controllers
         [HttpGet("emails/{labelId}")]
         public async Task<IActionResult> GetEmailsByLabels(string labelId)
         {
+            if(string.IsNullOrEmpty(labelId))
+                return BadRequest("Label ID is required.");
+
             var userId = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09"); // user seed
 
             var token = await _context.GoogleTokens
@@ -165,6 +168,10 @@ namespace MailFlow.API.Controllers
 
             // Fetching details of each email based on the email id
             var savedlMessages = new List<EmailMessage>();
+            var labelName = await _context.GmailLabels
+                .Where(l => l.Id == labelId && l.UserId == userId)
+                .Select(l => l.Name)
+                .FirstOrDefaultAsync();
 
             foreach (var messageHeader in listData.Messages)
             {
@@ -193,7 +200,7 @@ namespace MailFlow.API.Controllers
                     From = from,
                     Snippet = detailData.Snippet,
                     ReceivedAt = receivedAt,
-                    LabelIdsJson = JsonSerializer.Serialize(detailData.LabelIds),
+                    LabelName = labelId,
                     UserId = userId // set the UserId for each email
                 };
 
@@ -249,9 +256,7 @@ namespace MailFlow.API.Controllers
         public string From { get; set; }
         public string Snippet { get; set; }
         public DateTime ReceivedAt { get; set; }
-
-        // JSON list of Gmail label ids, enables us to save original Gmail label ids for each email (in json format) in order to be able to filter, search, group emails by labels
-        public string LabelIdsJson { get; set; }
+        public string LabelName { get; set; }
          
         public Guid UserId { get; set; } // foreign key to User table
         public User User { get; set; } // navigation property to User table
