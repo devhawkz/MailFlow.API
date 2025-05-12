@@ -26,25 +26,7 @@ namespace MailFlow.API.Controllers
         [HttpGet("authorize")]
         public async Task<IActionResult> Authorize()
         {
-            var clientId = _config["GmailClientId"];
-            var clientSecret = _config["GmailClientSecret"];
-
-            // find a better way to check this conditions
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
-                return BadRequest("Gmail ClientId or ClientSecret is missing.");
-
-            var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                new ClientSecrets
-                {
-                    ClientId = clientId,
-                    ClientSecret = clientSecret
-                },
-                new[] { GmailService.Scope.GmailReadonly },
-                "user", //location where the token will be stored is associated with this identifier
-                CancellationToken.None,
-                new NullDataStore() // name of the folder where the token will be stored and token file location
-            );
-
+            var credential = await GetUserCredentialAsync();
 
             var userId = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09");
 
@@ -95,6 +77,20 @@ namespace MailFlow.API.Controllers
 
             if (token == null)
                 return Unauthorized("Access token not found.");
+       
+            if (token.ExpiresAt < DateTime.UtcNow)
+            {
+                var credential = await GetUserCredentialAsync();
+                await credential.RefreshTokenAsync(CancellationToken.None);
+
+                token.AccessToken = credential.Token.AccessToken;
+                token.RefreshToken = credential.Token.RefreshToken;
+                token.ExpiresAt = DateTime.UtcNow.AddSeconds(credential.Token.ExpiresInSeconds ?? 3600);
+
+                _context.GoogleTokens.Update(token);
+
+                await _context.SaveChangesAsync();
+            }
 
                 using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization =
@@ -120,7 +116,26 @@ namespace MailFlow.API.Controllers
 
            
         }
-        
+
+
+        // HELPER METHODS
+        private async Task<UserCredential> GetUserCredentialAsync()
+        {
+            var clientId = _config["GmailClientId"];
+            var clientSecret = _config["GmailClientSecret"];
+
+            return await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                new ClientSecrets
+                {
+                    ClientId = clientId,
+                    ClientSecret = clientSecret
+                },
+                new[] { GmailService.Scope.GmailReadonly },
+                "user", //location where the token will be stored is associated with this identifier
+                CancellationToken.None,
+                new NullDataStore() // name of the folder where the token will be stored and token file location
+            );
+        }
 
     }
 
