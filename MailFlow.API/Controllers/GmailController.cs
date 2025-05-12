@@ -92,7 +92,7 @@ namespace MailFlow.API.Controllers
                 await _context.SaveChangesAsync();
             }
 
-                using var httpClient = new HttpClient();
+            using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
@@ -108,7 +108,12 @@ namespace MailFlow.API.Controllers
 
             foreach(var label in labelList.Labels)
             {
+                var exists = await _context.GmailLabels.AnyAsync(l => l.Id == label.Id && l.UserId == userId);
+                if(exists)
+                    continue;
+
                 await _context.GmailLabels.AddAsync(label);
+                label.UserId = userId; // set the UserId for each label
             }
             await _context.SaveChangesAsync();
 
@@ -117,6 +122,91 @@ namespace MailFlow.API.Controllers
            
         }
 
+        [HttpGet("emails/{labelId}")]
+        public async Task<IActionResult> GetEmailsByLabels(string labelId)
+        {
+            var userId = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09"); // user seed
+
+            var token = await _context.GoogleTokens
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.ExpiresAt)
+                .FirstOrDefaultAsync();
+
+            if(token == null)
+                return Unauthorized("Access token not found.");
+
+            if(token.ExpiresAt < DateTime.UtcNow)
+            {
+                var credential = await GetUserCredentialAsync();
+                await credential.RefreshTokenAsync(CancellationToken.None);
+                token.AccessToken = credential.Token.AccessToken;
+                token.RefreshToken = credential.Token.RefreshToken;
+                token.ExpiresAt = DateTime.UtcNow.AddSeconds(credential.Token.ExpiresInSeconds ?? 3600);
+                _context.GoogleTokens.Update(token);
+                await _context.SaveChangesAsync();
+            }
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token.AccessToken);
+
+            // Fetching list of emails ids based on labelId, maximum 5 emails 
+            var listResponse = await httpClient.GetAsync($"https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds={labelId}&maxResults=5");
+
+            if(!listResponse.IsSuccessStatusCode)
+                return StatusCode((int)listResponse.StatusCode, await listResponse.Content.ReadAsStringAsync());
+
+            var listJson = await listResponse.Content.ReadAsStringAsync();
+            var listData = JsonSerializer.Deserialize<GmailMessageListResponse>(listJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            //first part checks if list is null and second part checks if list contains at least one email
+            if (listData.Messages is null || !listData.Messages.Any())
+                return Ok("No emails found for this label.");
+
+            // Fetching details of each email based on the email id
+            var savedlMessages = new List<EmailMessage>();
+
+            foreach (var messageHeader in listData.Messages)
+            {
+                var detailResponse = await httpClient.GetAsync(
+                    $"https://gmail.googleapis.com/gmail/v1/users/me/messages/{messageHeader.Id}?format=full");
+
+                if (!detailResponse.IsSuccessStatusCode)
+                    continue;
+
+                var detailJson = await detailResponse.Content.ReadAsStringAsync();
+                var detailData = JsonSerializer.Deserialize<GmailMessageDetail>(detailJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                var subject = detailData.Payload.Headers.FirstOrDefault(h => h.Name.Equals("Subject"))?.Value;
+                var from = detailData.Payload.Headers.FirstOrDefault(h => h.Name.Equals("From"))?.Value;
+                var receivedAt = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(detailData.InternalDate)).DateTime;
+
+                var exists = await _context.EmailMessages.AnyAsync(e => e.GmailMessageId == detailData.Id);
+                if (exists)
+                    continue;
+
+                var emailMessage = new EmailMessage
+                {
+                    Id = Guid.NewGuid(),
+                    GmailMessageId = detailData.Id,
+                    Subject = subject,
+                    From = from,
+                    Snippet = detailData.Snippet,
+                    ReceivedAt = receivedAt,
+                    LabelIdsJson = JsonSerializer.Serialize(detailData.LabelIds),
+                    UserId = userId // set the UserId for each email
+                };
+
+                await _context.EmailMessages.AddAsync(emailMessage);
+                savedlMessages.Add(emailMessage);
+
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(savedlMessages);
+        }
+
+       
 
         // HELPER METHODS
         private async Task<UserCredential> GetUserCredentialAsync()
@@ -161,8 +251,8 @@ namespace MailFlow.API.Controllers
         public DateTime ReceivedAt { get; set; }
 
         // JSON list of Gmail label ids, enables us to save original Gmail label ids for each email (in json format) in order to be able to filter, search, group emails by labels
-        public string LabelIdJson { get; set; }
-        
+        public string LabelIdsJson { get; set; }
+         
         public Guid UserId { get; set; } // foreign key to User table
         public User User { get; set; } // navigation property to User table
     }
@@ -174,6 +264,7 @@ namespace MailFlow.API.Controllers
 
         public ICollection<GoogleToken> GoogleTokens { get; set; }
         public ICollection<EmailMessage> EmailMessages { get; set; }
+        public ICollection<GmailLabel> GmailLabels { get; set; }
     }
 
     public class GmailLabel
@@ -181,12 +272,43 @@ namespace MailFlow.API.Controllers
         public string Id { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
-    }
 
+        public Guid UserId { get; set; } // foreign key to User table
+        public User User { get; set; } // navigation property to User table
+    }
 
     //DTOs
     public record GmailLabelListResponse(IEnumerable<GmailLabel> Labels);
+   
+    public record GmailMessageListResponse(IEnumerable<GmailMessageHeader> Messages);
 
+    public class GmailMessageHeader
+    {
+        public string Id { get; set; }
+        public string ThreadId { get; set; }
+    }
+    public class GmailMessageDetail
+    {
+        public string Id { get; set; }
+        public string ThreadId { get; set; }
+        public IEnumerable<string> LabelIds { get; set; }
+        public string Snippet { get; set; }
+        public string InternalDate { get; set; }
+        public GmailPayload Payload { get; set; }
+    }
+     
+    public class GmailPayload
+    {
+        public IEnumerable<GmailHeader> Headers { get; set; }
+    }
+
+    public class GmailHeader
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+    }
+
+    // DBCONTEXT CLASS
     public class DataContext : DbContext
     {
         public DataContext(DbContextOptions<DataContext> options) : base(options)

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MailFlow.API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250510113315_GmailLabelEntity")]
-    partial class GmailLabelEntity
+    [Migration("20250512154220_ChangeinEmailMessageEntity")]
+    partial class ChangeinEmailMessageEntity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,7 +39,7 @@ namespace MailFlow.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("LabelIdJson")
+                    b.PrimitiveCollection<string>("LabelIds")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -77,7 +77,12 @@ namespace MailFlow.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("GmailLabels");
                 });
@@ -143,6 +148,17 @@ namespace MailFlow.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MailFlow.API.Controllers.GmailLabel", b =>
+                {
+                    b.HasOne("MailFlow.API.Controllers.User", "User")
+                        .WithMany("GmailLabels")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MailFlow.API.Controllers.GoogleToken", b =>
                 {
                     b.HasOne("MailFlow.API.Controllers.User", "User")
@@ -157,6 +173,8 @@ namespace MailFlow.API.Migrations
             modelBuilder.Entity("MailFlow.API.Controllers.User", b =>
                 {
                     b.Navigation("EmailMessages");
+
+                    b.Navigation("GmailLabels");
 
                     b.Navigation("GoogleTokens");
                 });
