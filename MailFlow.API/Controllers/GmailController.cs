@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -90,7 +91,7 @@ namespace MailFlow.API.Controllers
 
                 _context.GoogleTokens.Update(token);
 
-                await _context.SaveChangesAsync();
+               
             }
 
             using var httpClient = new HttpClient();
@@ -112,9 +113,8 @@ namespace MailFlow.API.Controllers
                 var exists = await _context.GmailLabels.AnyAsync(l => l.Id == label.Id && l.UserId == userId);
                 if(exists)
                     continue;
-
-                await _context.GmailLabels.AddAsync(label);
                 label.UserId = userId; // set the UserId for each label
+                await _context.GmailLabels.AddAsync(label);
             }
             await _context.SaveChangesAsync();
 
@@ -238,7 +238,7 @@ namespace MailFlow.API.Controllers
                 token.RefreshToken = credential.Token.RefreshToken;
                 token.ExpiresAt = DateTime.UtcNow.AddSeconds(credential.Token.ExpiresInSeconds ?? 3600);
                 _context.GoogleTokens.Update(token);
-                await _context.SaveChangesAsync();
+                
             }
 
             using var httpClient = new HttpClient();
@@ -310,9 +310,9 @@ namespace MailFlow.API.Controllers
                 };
 
                 await _context.EmailMessageContents.AddAsync(contentEntity);
-                await _context.SaveChangesAsync();
+               
             }
-
+            await _context.SaveChangesAsync();
             return Ok(new
             {
                 format,
@@ -374,11 +374,12 @@ namespace MailFlow.API.Controllers
         public string Snippet { get; set; }
         public DateTime ReceivedAt { get; set; }
         public string LabelName { get; set; }
-         
+        public EmailMessageContent Content { get; set; } // 1:1 relation to EmailMessageContent
+
         public Guid UserId { get; set; } // foreign key to User table
         public User User { get; set; } // navigation property to User table
 
-        public ICollection<EmailMessageContent> EmailMessageContents { get; set; } // navigation property to EmailMessageContent table
+       
     }
 
     public class User
@@ -404,6 +405,7 @@ namespace MailFlow.API.Controllers
     {
         public Guid Id { get; set; }
         public string Content { get; set; }
+        [ForeignKey("EmailMessage")]
         public Guid EmailMessageId { get; set; } // foreign key to EmailMessage table
         public EmailMessage EmailMessage { get; set; } // navigation property to EmailMessage table
     }
@@ -484,6 +486,14 @@ namespace MailFlow.API.Controllers
                 });
 
             });
+
+            // 1:1 relation EmailMessage and EmailMessageContent
+            modelBuilder.Entity<EmailMessage>()
+                .HasOne(e => e.Content)
+                .WithOne(c => c.EmailMessage)
+                .HasForeignKey<EmailMessageContent>(c => c.EmailMessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 
