@@ -8,4 +8,4 @@ public class EmailMessageContentRepository : RepositoryBase<EmailMessageContent>
     public EmailMessageContentRepository(DataContext dataContext) : base(dataContext)
     {
     }
-}2
+}
