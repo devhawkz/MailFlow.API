@@ -1,5 +1,6 @@
 ﻿using Entities.Models;
 using Microsoft.EntityFrameworkCore;
+using Repository.Configuration;
 
 namespace Repository;
 
@@ -20,26 +21,7 @@ public class DataContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.HasKey(u => u.Id);
-
-            entity.Property(u => u.Email).IsRequired().HasMaxLength(255);
-
-            entity.HasData(new User
-            {
-                Id = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09"),
-                Email = "pavlejovanovic34@gmail.com"
-            });
-
-        });
-
-        // 1:1 relation EmailMessage and EmailMessageContent
-        modelBuilder.Entity<EmailMessage>()
-            .HasOne(e => e.Content)
-            .WithOne(c => c.EmailMessage)
-            .HasForeignKey<EmailMessageContent>(c => c.EmailMessageId)
-            .OnDelete(DeleteBehavior.Cascade);
-
+        modelBuilder.ApplyConfiguration(new UserConfiguration());
+        modelBuilder.ApplyConfiguration(new EmailMessageContentConfiguration());
     }
 }
