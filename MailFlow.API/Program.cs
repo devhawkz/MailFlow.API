@@ -1,4 +1,5 @@
 using MailFlow.API.Controllers;
+using MailFlow.API.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,7 @@ builder.Configuration.AddUserSecrets<Program>();
 
 
 
+builder.Services.ConfigureCors();
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("sqlConnection")));
 
@@ -20,11 +22,15 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+    app.UseDeveloperExceptionPage();
+else
+    app.UseHsts();
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
+app.UseCors("CorsPolicy");
 
 app.UseAuthorization();
 

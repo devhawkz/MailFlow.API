@@ -40,7 +40,7 @@ namespace MailFlow.API.Controllers
             var existing = await _context.GoogleTokens
                 .FirstOrDefaultAsync(t => t.UserId == userId);
 
-            if (existing != null)
+            if (existing is not null)
             {
                 existing.AccessToken = credential.Token.AccessToken;
                 existing.RefreshToken = credential.Token.RefreshToken;
@@ -66,7 +66,6 @@ namespace MailFlow.API.Controllers
             return Ok();
         }
 
-
         [HttpGet("labels")]
         public async Task<IActionResult> GetLabels()
         {
@@ -77,7 +76,7 @@ namespace MailFlow.API.Controllers
                 .OrderByDescending(t => t.ExpiresAt)
                 .FirstOrDefaultAsync();
 
-            if (token == null)
+            if (token is null)
                 return Unauthorized("Access token not found.");
        
             if (token.ExpiresAt < DateTime.UtcNow)
@@ -189,6 +188,7 @@ namespace MailFlow.API.Controllers
                 var from = detailData.Payload.Headers.FirstOrDefault(h => h.Name.Equals("From"))?.Value;
                 var receivedAt = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(detailData.InternalDate)).DateTime;
 
+                // maybe this check need to be moved to the top of the loop
                 var exists = await _context.EmailMessages.AnyAsync(e => e.GmailMessageId == detailData.Id);
                 if (exists)
                     continue;
@@ -211,7 +211,15 @@ namespace MailFlow.API.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return Ok(savedlMessages);
+
+
+            IEnumerable<EmailMessage> savedMessages = await _context.EmailMessages
+                .Where(e => e.UserId == userId && e.LabelName == labelId)
+                .ToListAsync();
+
+
+
+            return Ok(savedMessages);
         }
 
         [HttpGet("emails/{emailId}/body")]
@@ -346,6 +354,10 @@ namespace MailFlow.API.Controllers
             {
                 case 2: base64Url += "=="; break;
                 case 3: base64Url += "="; break;
+
+                //low risk of exception because we use GmailAPI, but still need to handle it
+                case 1:
+                    throw new FormatException("Invalid base64url string: Length modulo 4 cannot be 1.");
             }
             var bytes = Convert.FromBase64String(base64Url);
             return Encoding.UTF8.GetString(bytes);
