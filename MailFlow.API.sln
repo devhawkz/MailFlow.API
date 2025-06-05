@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35828.75 d17.13
+VisualStudioVersion = 17.13.35828.75
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailFlow.API", "MailFlow.API\MailFlow.API.csproj", "{4E7D87BB-6063-41EC-8A3E-E511724D8D79}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entities", "Entities\Entities.csproj", "{600A7C53-232F-4987-A857-936B612315BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repository", "Repository\Repository.csproj", "{126775C3-9E2C-4CFC-8DBA-904ED32D6F1B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{4E7D87BB-6063-41EC-8A3E-E511724D8D79}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E7D87BB-6063-41EC-8A3E-E511724D8D79}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E7D87BB-6063-41EC-8A3E-E511724D8D79}.Release|Any CPU.Build.0 = Release|Any CPU
+		{600A7C53-232F-4987-A857-936B612315BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{600A7C53-232F-4987-A857-936B612315BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{600A7C53-232F-4987-A857-936B612315BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{600A7C53-232F-4987-A857-936B612315BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{126775C3-9E2C-4CFC-8DBA-904ED32D6F1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{126775C3-9E2C-4CFC-8DBA-904ED32D6F1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{126775C3-9E2C-4CFC-8DBA-904ED32D6F1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{126775C3-9E2C-4CFC-8DBA-904ED32D6F1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

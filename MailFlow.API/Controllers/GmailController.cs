@@ -366,61 +366,7 @@ namespace MailFlow.API.Controllers
     }
 
     //ENTITIES
-    public class GoogleToken
-    {
-        public Guid Id { get; set; }
-        public string AccessToken { get; set; }
-        public string RefreshToken { get; set; }
-        public DateTime ExpiresAt { get; set; }
-
-        public Guid UserId { get; set; } // foreign key to User table
-        public User User { get; set; } // navigation property to User table
-    }
-
-    public class  EmailMessage
-    {
-        public Guid Id { get; set; }
-        public string GmailMessageId { get; set; }
-        public string Subject { get; set; }
-        public string From { get; set; }
-        public string Snippet { get; set; }
-        public DateTime ReceivedAt { get; set; }
-        public string LabelName { get; set; }
-        public EmailMessageContent Content { get; set; } // 1:1 relation to EmailMessageContent
-
-        public Guid UserId { get; set; } // foreign key to User table
-        public User User { get; set; } // navigation property to User table
-
-       
-    }
-
-    public class User
-    {
-        public Guid Id { get; set; }
-        public string Email { get; set; }
-
-        public ICollection<GoogleToken> GoogleTokens { get; set; }
-        public ICollection<EmailMessage> EmailMessages { get; set; }
-        public ICollection<GmailLabel> GmailLabels { get; set; }
-    }
-
-    public class GmailLabel
-    {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public string Type { get; set; }
-
-        public Guid UserId { get; set; } // foreign key to User table
-        public User User { get; set; } // navigation property to User table
-    }
-    public class EmailMessageContent
-    {
-        public Guid Id { get; set; }
-        public string Content { get; set; }
-        [ForeignKey("EmailMessage")]
-        public Guid EmailMessageId { get; set; } // foreign key to EmailMessage table
-        public EmailMessage EmailMessage { get; set; } // navigation property to EmailMessage table
-    }
+    
 
     //DTOs
     public record GmailLabelListResponse(IEnumerable<GmailLabel> Labels);
@@ -466,47 +412,6 @@ namespace MailFlow.API.Controllers
         public string Value { get; set; }
     }
 
-    // DBCONTEXT CLASS
-    public class DataContext : DbContext
-    {
-        public DataContext(DbContextOptions<DataContext> options) : base(options)
-        {
-           
-        }
 
-        public DbSet<GoogleToken> GoogleTokens { get; set; }
-        public DbSet<EmailMessage> EmailMessages { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<GmailLabel> GmailLabels {  get; set; }
-        public DbSet<EmailMessageContent> EmailMessageContents { get; set; }
-
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<User>(entity =>
-            {
-                entity.HasKey(u => u.Id);
-
-                entity.Property(u => u.Email).IsRequired().HasMaxLength(255);
-
-                entity.HasData(new User
-                {
-                    Id = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09"),
-                    Email = "pavlejovanovic34@gmail.com"
-                });
-
-            });
-
-            // 1:1 relation EmailMessage and EmailMessageContent
-            modelBuilder.Entity<EmailMessage>()
-                .HasOne(e => e.Content)
-                .WithOne(c => c.EmailMessage)
-                .HasForeignKey<EmailMessageContent>(c => c.EmailMessageId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-        }
-    }
 
 }
