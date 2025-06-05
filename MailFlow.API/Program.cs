@@ -9,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 //enabling reading secrets from user secrets
 builder.Configuration.AddUserSecrets<Program>();
 builder.Services.ConfigureRepositoryManager();
+builder.Services.ConfigureServiceManager();
+builder.Services.ConfigureSqlContext(builder.Configuration);
 
 builder.Services.ConfigureCors();
 //builder.Services.AddDbContext<DataContext>(options =>

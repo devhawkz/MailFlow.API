@@ -1,9 +1,8 @@
-﻿
-using Contracts;
+﻿using Contracts;
 
 namespace Repository;
 
-public class RepositoryManager : IRepositoryManager
+public sealed class RepositoryManager : IRepositoryManager
 {
     private readonly DataContext _dataContext;
     private readonly Lazy<IGoogleTokenRepository> _googleTokenRepository;
@@ -18,7 +17,7 @@ public class RepositoryManager : IRepositoryManager
 
     public RepositoryManager(DataContext dataContext)
     {
-        dataContext = _dataContext;
+        _dataContext = dataContext;
         _googleTokenRepository = new Lazy<IGoogleTokenRepository>(() => new GoogleTokenRepository(dataContext));
         _emailMessageRepository = new Lazy<IEmailMessageRepository>(() => new EmailMessageRepository(dataContext));
         _userRepository = new Lazy<IUserRepository>(() => new UserRepository(dataContext));
