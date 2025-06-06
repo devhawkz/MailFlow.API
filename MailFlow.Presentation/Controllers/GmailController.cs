@@ -1,19 +1,15 @@
 ﻿using Google.Apis.Auth.OAuth2;
-using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Gmail.v1;
 using Google.Apis.Util.Store;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
-using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.Extensions.Configuration;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
 namespace MailFlow.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/gmail")]
     [ApiController]
     public class GmailController : ControllerBase
     {
@@ -69,17 +65,17 @@ namespace MailFlow.API.Controllers
         [HttpGet("labels")]
         public async Task<IActionResult> GetLabels()
         {
-            var userId = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09"); // user seed
+            var userId = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09"); // user seed //repo
 
-            var token = await _context.GoogleTokens
+            var token = await _context.GoogleTokens // repo
                 .Where(t => t.UserId == userId)
                 .OrderByDescending(t => t.ExpiresAt)
                 .FirstOrDefaultAsync();
 
             if (token is null)
-                return Unauthorized("Access token not found.");
-       
-            if (token.ExpiresAt < DateTime.UtcNow)
+                return Unauthorized("Access token not found."); // repo
+             
+            if (token.ExpiresAt < DateTime.UtcNow) // repo
             {
                 var credential = await GetUserCredentialAsync();
                 await credential.RefreshTokenAsync(CancellationToken.None);
@@ -90,10 +86,10 @@ namespace MailFlow.API.Controllers
 
                 _context.GoogleTokens.Update(token);
 
-               
+
             }
 
-            using var httpClient = new HttpClient();
+            using var httpClient = new HttpClient(); // service
             httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
@@ -102,15 +98,15 @@ namespace MailFlow.API.Controllers
                 return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
             var content = await response.Content.ReadAsStringAsync();
-           
+
 
             var labelList = JsonSerializer.Deserialize<GmailLabelListResponse>(content,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            foreach(var label in labelList.Labels)
+            foreach (var label in labelList.Labels)
             {
                 var exists = await _context.GmailLabels.AnyAsync(l => l.Id == label.Id && l.UserId == userId);
-                if(exists)
+                if (exists)
                     continue;
                 label.UserId = userId; // set the UserId for each label
                 await _context.GmailLabels.AddAsync(label);
@@ -119,13 +115,13 @@ namespace MailFlow.API.Controllers
 
             return Ok(labelList.Labels);
 
-           
+
         }
 
         [HttpGet("emails/{labelId}")]
         public async Task<IActionResult> GetEmailsByLabels(string labelId)
         {
-            if(string.IsNullOrEmpty(labelId))
+            if (string.IsNullOrEmpty(labelId))
                 return BadRequest("Label ID is required.");
 
             var userId = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09"); // user seed
@@ -135,10 +131,10 @@ namespace MailFlow.API.Controllers
                 .OrderByDescending(t => t.ExpiresAt)
                 .FirstOrDefaultAsync();
 
-            if(token == null)
+            if (token == null)
                 return Unauthorized("Access token not found.");
 
-            if(token.ExpiresAt < DateTime.UtcNow)
+            if (token.ExpiresAt < DateTime.UtcNow)
             {
                 var credential = await GetUserCredentialAsync();
                 await credential.RefreshTokenAsync(CancellationToken.None);
@@ -156,7 +152,7 @@ namespace MailFlow.API.Controllers
             // Fetching list of emails ids based on labelId, maximum 5 emails 
             var listResponse = await httpClient.GetAsync($"https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds={labelId}&maxResults=5");
 
-            if(!listResponse.IsSuccessStatusCode)
+            if (!listResponse.IsSuccessStatusCode)
                 return StatusCode((int)listResponse.StatusCode, await listResponse.Content.ReadAsStringAsync());
 
             var listJson = await listResponse.Content.ReadAsStringAsync();
@@ -246,7 +242,7 @@ namespace MailFlow.API.Controllers
                 token.RefreshToken = credential.Token.RefreshToken;
                 token.ExpiresAt = DateTime.UtcNow.AddSeconds(credential.Token.ExpiresInSeconds ?? 3600);
                 _context.GoogleTokens.Update(token);
-                
+
             }
 
             using var httpClient = new HttpClient();
@@ -318,7 +314,7 @@ namespace MailFlow.API.Controllers
                 };
 
                 await _context.EmailMessageContents.AddAsync(contentEntity);
-               
+
             }
             await _context.SaveChangesAsync();
             return Ok(new
@@ -366,11 +362,11 @@ namespace MailFlow.API.Controllers
     }
 
     //ENTITIES
-    
+
 
     //DTOs
     public record GmailLabelListResponse(IEnumerable<GmailLabel> Labels);
-   
+
     public record GmailMessageListResponse(IEnumerable<GmailMessageHeader> Messages);
 
     public class GmailMessageHeader

@@ -26,4 +26,8 @@ public static class ServiceExtensions
     public static void ConfigureSqlContext(this IServiceCollection services, IConfiguration configuration) =>
         services.AddDbContext<DataContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("sqlConnection")));
+
+    public static void ConfigureToolsRepository(this IServiceCollection services) =>
+        services.AddScoped<IToolsRepository, ToolsRepository>();
 }
+
