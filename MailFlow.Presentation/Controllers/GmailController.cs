@@ -3,6 +3,8 @@ using Google.Apis.Gmail.v1;
 using Google.Apis.Util.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Service.Contracts;
+using Shared.DTOs;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -13,12 +15,11 @@ namespace MailFlow.API.Controllers
     [ApiController]
     public class GmailController : ControllerBase
     {
-        private readonly IConfiguration _config;
-        private readonly DataContext _context;
-        public GmailController(IConfiguration config, DataContext context)
+
+        private readonly IServiceManager _serviceManager;
+        public GmailController(IServiceManager serviceManager)
         {
-            _config = config;
-            _context = context;
+            _serviceManager = serviceManager;
         }
 
         [HttpGet("authorize")]
@@ -63,59 +64,12 @@ namespace MailFlow.API.Controllers
         }
 
         [HttpGet("labels")]
-        public async Task<IActionResult> GetLabels()
-        {
-            var userId = Guid.Parse("02d9cd73-990c-437c-827b-fac07e08ba09"); // user seed //repo
-
-            var token = await _context.GoogleTokens // repo
-                .Where(t => t.UserId == userId)
-                .OrderByDescending(t => t.ExpiresAt)
-                .FirstOrDefaultAsync();
-
-            if (token is null)
-                return Unauthorized("Access token not found."); // repo
-             
-            if (token.ExpiresAt < DateTime.UtcNow) // repo
-            {
-                var credential = await GetUserCredentialAsync();
-                await credential.RefreshTokenAsync(CancellationToken.None);
-
-                token.AccessToken = credential.Token.AccessToken;
-                token.RefreshToken = credential.Token.RefreshToken;
-                token.ExpiresAt = DateTime.UtcNow.AddSeconds(credential.Token.ExpiresInSeconds ?? 3600);
-
-                _context.GoogleTokens.Update(token);
-
-
-            }
-
-            using var httpClient = new HttpClient(); // service
-            httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", token.AccessToken);
-
-            var response = await httpClient.GetAsync("https://gmail.googleapis.com/gmail/v1/users/me/labels");
-            if (!response.IsSuccessStatusCode)
-                return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
-
-            var content = await response.Content.ReadAsStringAsync();
-
-
-            var labelList = JsonSerializer.Deserialize<GmailLabelListResponse>(content,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            foreach (var label in labelList.Labels)
-            {
-                var exists = await _context.GmailLabels.AnyAsync(l => l.Id == label.Id && l.UserId == userId);
-                if (exists)
-                    continue;
-                label.UserId = userId; // set the UserId for each label
-                await _context.GmailLabels.AddAsync(label);
-            }
-            await _context.SaveChangesAsync();
-
-            return Ok(labelList.Labels);
-
-
+        public async Task<ActionResult<GmailLabelListDTO>> GetLabels()
+        { 
+           var response = await _serviceManager.GmailLabelService.GetLabelsFromAPI(trackChanges: false);
+            if (response is null || !response.Labels.Any())
+                return NotFound("No labels found.");
+            return Ok(response);
         }
 
         [HttpGet("emails/{labelId}")]
@@ -325,39 +279,7 @@ namespace MailFlow.API.Controllers
         }
 
         // HELPER METHODS
-        private async Task<UserCredential> GetUserCredentialAsync()
-        {
-            var clientId = _config["GmailClientId"];
-            var clientSecret = _config["GmailClientSecret"];
-
-            return await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                new ClientSecrets
-                {
-                    ClientId = clientId,
-                    ClientSecret = clientSecret
-                },
-                new[] { GmailService.Scope.GmailReadonly },
-                "user", //location where the token will be stored is associated with this identifier
-                CancellationToken.None,
-                new NullDataStore() // name of the folder where the token will be stored and token file location
-            );
-        }
-
-        private static string DecodeBase64UrlString(string base64Url)
-        {
-            base64Url = base64Url.Replace('-', '+').Replace('_', '/');
-            switch (base64Url.Length % 4)
-            {
-                case 2: base64Url += "=="; break;
-                case 3: base64Url += "="; break;
-
-                //low risk of exception because we use GmailAPI, but still need to handle it
-                case 1:
-                    throw new FormatException("Invalid base64url string: Length modulo 4 cannot be 1.");
-            }
-            var bytes = Convert.FromBase64String(base64Url);
-            return Encoding.UTF8.GetString(bytes);
-        }
+      
 
     }
 

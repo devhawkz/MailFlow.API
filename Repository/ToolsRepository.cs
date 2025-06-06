@@ -1,6 +1,4 @@
-﻿
-
-using Contracts;
+﻿using Contracts;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Util.Store;
 using System.Text;

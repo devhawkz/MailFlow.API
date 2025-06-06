@@ -4,8 +4,7 @@ namespace Contracts;
 
 public interface IGmailLabelRepository
 {
-    Task<GoogleToken?> GetLatestTokenForUserAsync(Guid userId);
-    Task<bool> LabelExistsAsync(string labeldId, Guid userId);
-    Task AddLabelAsync(GmailLabel label);
+    bool LabelExistsAsync(string labelId, Guid userId, bool trackChanges);
+    void AddLabelAsync(GmailLabel label);
 
 }

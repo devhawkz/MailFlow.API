@@ -10,22 +10,11 @@ internal sealed class GmailLabelRepository : RepositoryBase<GmailLabel>, IGmailL
     {
 
     }
-       public async Task<GoogleToken?> GetLatestValidTokenAsync(Guid userId)
-    {
-        return await DataContext.GoogleTokens
-            .Where(t => t.UserId == userId)
-            .OrderByDescending(t => t.ExpiresAt)
-            .FirstOrDefaultAsync();
-    }
 
-    public async Task<bool> ExistsAsync(string labelId, Guid userId)
-    {
-        return await DataContext.GmailLabels
-            .AnyAsync(l => l.Id == labelId && l.UserId == userId);
-    }
+    public bool LabelExistsAsync(string labelId, Guid userId, bool trackChanges) =>
+        FindByCondition(l => l.Id.Equals(labelId) && l.UserId.Equals(userId), trackChanges)
+            .Any();
 
-    public async Task AddAsync(GmailLabel label)
-    {
-        await DataContext.GmailLabels.Create;
-    }
+    public void AddLabelAsync(GmailLabel label) => Create(label);
+   
 }

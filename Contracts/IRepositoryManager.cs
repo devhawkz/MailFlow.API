@@ -7,6 +7,7 @@ public interface IRepositoryManager
     IUserRepository User { get; }
     IGmailLabelRepository GmailLabel { get; }
     IEmailMessageContentRepository EmailMessageContent { get; }
+    IToolsRepository Tools { get; }
     void Save();
 }
 

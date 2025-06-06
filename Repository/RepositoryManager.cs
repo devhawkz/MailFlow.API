@@ -5,6 +5,7 @@ namespace Repository;
 public sealed class RepositoryManager : IRepositoryManager
 {
     private readonly DataContext _dataContext;
+    private readonly IConfiguration _config;
     private readonly Lazy<IGoogleTokenRepository> _googleTokenRepository;
 
     private readonly Lazy<IEmailMessageRepository> _emailMessageRepository;
@@ -14,6 +15,7 @@ public sealed class RepositoryManager : IRepositoryManager
     private readonly Lazy<IGmailLabelRepository> _gmailLabelRepository;
 
     private readonly Lazy<IEmailMessageContentRepository> _emailMessageContentRepository;
+    private readonly Lazy<IToolsRepository> _toolsRepository;
 
     public RepositoryManager(DataContext dataContext)
     {
@@ -23,6 +25,7 @@ public sealed class RepositoryManager : IRepositoryManager
         _userRepository = new Lazy<IUserRepository>(() => new UserRepository(dataContext));
         _gmailLabelRepository = new Lazy<IGmailLabelRepository>(() => new GmailLabelRepository(dataContext));
         _emailMessageContentRepository = new Lazy<IEmailMessageContentRepository>(() => new EmailMessageContentRepository(dataContext));
+        _toolsRepository = new Lazy<IToolsRepository>(() => new ToolsRepository(_config));
     }
 
     public IGoogleTokenRepository GoogleToken => _googleTokenRepository.Value;
@@ -34,6 +37,8 @@ public sealed class RepositoryManager : IRepositoryManager
     public IGmailLabelRepository GmailLabel => _gmailLabelRepository.Value;
 
     public IEmailMessageContentRepository EmailMessageContent => _emailMessageContentRepository.Value;
+
+    public IToolsRepository Tools => _toolsRepository.Value;
 
     public void Save() => _dataContext.SaveChanges();
 
