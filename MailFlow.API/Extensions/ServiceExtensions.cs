@@ -29,5 +29,7 @@ public static class ServiceExtensions
 
     public static void ConfigureToolsRepository(this IServiceCollection services) =>
         services.AddScoped<IToolsRepository, ToolsRepository>();
+    public static void ConfigureToolsService(this IServiceCollection services) =>
+        services.AddScoped<IToolsService, ToolsService>();
 }
 

@@ -13,6 +13,7 @@ builder.Services.ConfigureServiceManager();
 builder.Services.ConfigureSqlContext(builder.Configuration);
 builder.Services.ConfigureCors();
 builder.Services.ConfigureToolsRepository();
+builder.Services.ConfigureToolsService();
 
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(MailFlow.Presentation.AssemblyReference).Assembly);

@@ -11,62 +11,40 @@ namespace Service;
 internal sealed class GmailLabelService : IGmailLabelService
 {
     private readonly IRepositoryManager _repositoryManager;
-
-    public GmailLabelService(IRepositoryManager repositoryManager)
+    private readonly IToolsService _toolsService;
+    private const string _path = "https://gmail.googleapis.com/gmail/v1/users/me/labels";
+    public GmailLabelService(IRepositoryManager repositoryManager, IToolsService toolsService)
     {
         _repositoryManager = repositoryManager;
+        _toolsService = toolsService;
     }
 
-    async Task<GmailLabelListDTO> IGmailLabelService.GetLabelsFromAPI(bool trackChanges)
+    public async Task<bool> GetLabelsFromAPI(bool trackChanges)
     {
-        var token = _repositoryManager.GoogleToken.GetLatestTokenForUserAsync(trackChanges);
-        if (token is null)
-            return new GmailLabelListDTO(Enumerable.Empty<GmailLabelDTO>());
+        var token = await _toolsService.GetUserTokenAsync();
 
-        if (token.ExpiresAt < DateTime.UtcNow)
-        {
-            var credential = await _repositoryManager.Tools.GetUserCredentialAsync();
-            await credential.RefreshTokenAsync(CancellationToken.None);
+        var content = await _toolsService.GetHttpResponseBody(path: _path, accessToken: token.AccessToken);
 
-            token.AccessToken = credential.Token.AccessToken;
-            token.RefreshToken = credential.Token.RefreshToken;
-            token.ExpiresAt = DateTime.UtcNow.AddSeconds(credential.Token.ExpiresInSeconds ?? 3600);
+        var labelList = await GetHttpResponseFromApi(accessToken: token.AccessToken);
+        if(labelList is null || !labelList.Labels.Any())
+            return false;
 
-             _repositoryManager.GoogleToken.UpdateTokenAsync(token);
-        }
+        _toolsService.AddLabelsToDb(labelList: labelList, userId: token.UserId, trackChanges: trackChanges);
 
-        using var httpClient = new HttpClient(); 
-        httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", token.AccessToken);
+        _repositoryManager.Save();
 
-        var response = await httpClient.GetAsync("https://gmail.googleapis.com/gmail/v1/users/me/labels");
-        if (!response.IsSuccessStatusCode)
-            return new GmailLabelListDTO(Enumerable.Empty<GmailLabelDTO>());
+        return true;
+    }
 
-        var content = await response.Content.ReadAsStringAsync();
+    private async Task<GmailLabelListDTO> GetHttpResponseFromApi(string accessToken)
+    {
+        var content = await _toolsService.GetHttpResponseBody(path: _path, accessToken: accessToken);
+        if (string.IsNullOrEmpty(content))
+            return null!;
 
         var labelList = JsonSerializer.Deserialize<GmailLabelListDTO>(content,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-        foreach(var label in labelList?.Labels!)
-        {
-            var exists = _repositoryManager.GmailLabel.LabelExistsAsync(labelId: label.Id, userId: token.UserId, trackChanges: trackChanges);
-            if(exists)
-                continue;
-
-            var gmailLabel = new GmailLabel
-            {
-                Id = label.Id,
-                Name = label.Name,
-                Type = label.Type,
-                UserId = token.UserId
-            };
-            _repositoryManager.GmailLabel.AddLabelAsync(gmailLabel);
-
-        }
-
-        _repositoryManager.Save();
-
-        return labelList;
+        return labelList!;
     }
 }

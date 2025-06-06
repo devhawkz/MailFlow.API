@@ -1,15 +1,18 @@
 ﻿using Contracts;
+using Entities.Models;
 using Google.Apis.Auth.OAuth2;
-using Google.Apis.Util.Store;
-using System.Text;
-using Microsoft.Extensions.Configuration;
 using Google.Apis.Gmail.v1;
+using Google.Apis.Util.Store;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
+using System.Text;
 
 namespace Repository;
 
 public sealed class ToolsRepository : IToolsRepository
 {
    private readonly IConfiguration _config;
+   private readonly DataContext _dataContext;
 
     public ToolsRepository(IConfiguration configuration)
     {
@@ -48,5 +51,15 @@ public sealed class ToolsRepository : IToolsRepository
         }
         var bytes = Convert.FromBase64String(base64Url);
         return Encoding.UTF8.GetString(bytes);
+    }
+
+    public GoogleToken RefreshToken(UserCredential credential, GoogleToken token)
+    {
+        token.AccessToken = credential.Token.AccessToken;
+        token.RefreshToken = credential.Token.RefreshToken;
+        token.ExpiresAt = DateTime.UtcNow.AddSeconds(credential.Token.ExpiresInSeconds ?? 3600);
+
+        return token;
+
     }
 }

@@ -10,12 +10,15 @@ public sealed class ServiceManager : IServiceManager
     private readonly Lazy<IUserService> _userService;
 
     private readonly Lazy<IGmailLabelService> _gmailLabelService;
-    public ServiceManager(IRepositoryManager repositoryManager)
+
+    private readonly IToolsService _toolsService;
+    public ServiceManager(IRepositoryManager repositoryManager, IToolsService toolsService)
     {
        
         _emailMessageService = new Lazy<IEmailMessageService>(() => new EmailMessageService(repositoryManager));
         _userService = new Lazy<IUserService>(() => new UserService(repositoryManager));
-        _gmailLabelService = new Lazy<IGmailLabelService>(() => new GmailLabelService(repositoryManager));
+        _toolsService = toolsService;
+        _gmailLabelService = new Lazy<IGmailLabelService>(() => new GmailLabelService(repositoryManager,_toolsService));
 
 
     }

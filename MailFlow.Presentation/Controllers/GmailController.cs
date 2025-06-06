@@ -64,12 +64,12 @@ namespace MailFlow.API.Controllers
         }
 
         [HttpGet("labels")]
-        public async Task<ActionResult<GmailLabelListDTO>> GetLabels()
+        public async Task<ActionResult<bool>> GetLabels()
         { 
            var response = await _serviceManager.GmailLabelService.GetLabelsFromAPI(trackChanges: false);
-            if (response is null || !response.Labels.Any())
+            if (!response)
                 return NotFound("No labels found.");
-            return Ok(response);
+            return Ok();
         }
 
         [HttpGet("emails/{labelId}")]

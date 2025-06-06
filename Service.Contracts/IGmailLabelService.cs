@@ -1,9 +1,6 @@
-﻿
-using Shared.DTOs;
-
-namespace Service.Contracts;
+﻿namespace Service.Contracts;
 
 public interface IGmailLabelService
 {
-    Task<GmailLabelListDTO> GetLabelsFromAPI(bool trackChanges);
+     Task<bool> GetLabelsFromAPI(bool trackChanges);
 }
