@@ -14,26 +14,7 @@ public sealed class ToolsService : IToolsService
     {
         _repositoryManager = repositoryManager;
     }
-    public void AddLabelsToDb(GmailLabelListDTO labelList, Guid userId, bool trackChanges)
-    {
-        foreach(var label in labelList.Labels)
-        {
-            var exists = _repositoryManager.GmailLabel.LabelExistsAsync(labelId: label.Id, userId: userId, trackChanges: trackChanges);
-            if (exists)
-                continue;
-            
-            var gmailLabel = new GmailLabel
-            {
-                Id = label.Id,
-                Name = label.Name,
-                Type = label.Type,
-                UserId = userId
-            };
-            _repositoryManager.GmailLabel.AddLabelAsync(gmailLabel);
-        }
-    }
-
-    public async Task<string> GetHttpResponseBody(string path, string accessToken)
+    public async Task<string> GetHttpResponseBody(string path, string accessToken, string param = "")
     {
         using var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Authorization =
@@ -47,6 +28,7 @@ public sealed class ToolsService : IToolsService
         return content;
     }
 
+   
     public async Task<GoogleToken> GetUserTokenAsync()
     {
         var token = _repositoryManager.GoogleToken.GetLatestTokenForUserAsync(trackChanges: false);

@@ -29,7 +29,7 @@ internal sealed class GmailLabelService : IGmailLabelService
         if(labelList is null || !labelList.Labels.Any())
             return false;
 
-        _toolsService.AddLabelsToDb(labelList: labelList, userId: token.UserId, trackChanges: trackChanges);
+        AddLabelsToDb(labelList: labelList, userId: token.UserId, trackChanges: trackChanges);
 
         _repositoryManager.Save();
 
@@ -46,5 +46,23 @@ internal sealed class GmailLabelService : IGmailLabelService
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         return labelList!;
+    }
+    private void AddLabelsToDb(GmailLabelListDTO labelList, Guid userId, bool trackChanges)
+    {
+        foreach (var label in labelList.Labels)
+        {
+            var exists = _repositoryManager.GmailLabel.LabelExistsAsync(labelId: label.Id, userId: userId, trackChanges: trackChanges);
+            if (exists)
+                continue;
+
+            var gmailLabel = new GmailLabel
+            {
+                Id = label.Id,
+                Name = label.Name,
+                Type = label.Type,
+                UserId = userId
+            };
+            _repositoryManager.GmailLabel.AddLabelAsync(gmailLabel);
+        }
     }
 }
