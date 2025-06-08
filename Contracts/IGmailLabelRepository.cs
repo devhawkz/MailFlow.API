@@ -4,7 +4,8 @@ namespace Contracts;
 
 public interface IGmailLabelRepository
 {
-    bool LabelExistsAsync(string labelId, Guid userId, bool trackChanges);
+    IEnumerable<string> FindExistingLabelsIdsAsync(Guid userId, bool trackChanges);
+    bool CheckIfLabelExistsAsync(Guid labelId);
     void AddLabelAsync(GmailLabel label);
 
 }

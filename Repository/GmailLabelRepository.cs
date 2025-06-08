@@ -11,10 +11,15 @@ internal sealed class GmailLabelRepository : RepositoryBase<GmailLabel>, IGmailL
 
     }
 
-    public bool LabelExistsAsync(string labelId, Guid userId, bool trackChanges) =>
-        FindByCondition(l => l.Id.Equals(labelId) && l.UserId.Equals(userId), trackChanges)
-            .Any();
+    public IEnumerable<string> FindExistingLabelsIdsAsync(Guid userId, bool trackChanges) =>
+        FindByCondition(l => l.UserId.Equals(userId), trackChanges)
+        .Select(l => l.Id)
+        .ToList();
+            
 
     public void AddLabelAsync(GmailLabel label) => Create(label);
-   
+
+    public bool CheckIfLabelExistsAsync(Guid labelId) =>
+        FindByCondition(l => l.Id.Equals(labelId), trackChanges: false)
+        .Any();
 }

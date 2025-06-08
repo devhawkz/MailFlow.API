@@ -3,6 +3,7 @@ using Entities.Models;
 using Google.Apis.Auth.OAuth2;
 using Service.Contracts;
 using Shared.DTOs;
+using System.ComponentModel.DataAnnotations;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -23,9 +24,7 @@ internal sealed class GmailLabelService : IGmailLabelService
     {
         var token = await _toolsService.GetUserTokenAsync();
 
-        var content = await _toolsService.GetHttpResponseBody(path: _path, accessToken: token.AccessToken);
-
-        var labelList = await GetHttpResponseFromApi(accessToken: token.AccessToken);
+        var labelList = await GetDeserializedResponseFromApi(accessToken: token.AccessToken);
         if(labelList is null || !labelList.Labels.Any())
             return false;
 
@@ -36,7 +35,7 @@ internal sealed class GmailLabelService : IGmailLabelService
         return true;
     }
 
-    private async Task<GmailLabelListDTO> GetHttpResponseFromApi(string accessToken)
+    private async Task<GmailLabelListDTO> GetDeserializedResponseFromApi(string accessToken)
     {
         var content = await _toolsService.GetHttpResponseBody(path: _path, accessToken: accessToken);
         if (string.IsNullOrEmpty(content))
@@ -49,10 +48,12 @@ internal sealed class GmailLabelService : IGmailLabelService
     }
     private void AddLabelsToDb(GmailLabelListDTO labelList, Guid userId, bool trackChanges)
     {
+        var labelsIds = _repositoryManager.GmailLabel.FindExistingLabelsIdsAsync(userId: userId, trackChanges: trackChanges);
+        var existingLabelIds = labelsIds.ToHashSet();
         foreach (var label in labelList.Labels)
         {
-            var exists = _repositoryManager.GmailLabel.LabelExistsAsync(labelId: label.Id, userId: userId, trackChanges: trackChanges);
-            if (exists)
+            
+            if (existingLabelIds.Contains(label.Id))
                 continue;
 
             var gmailLabel = new GmailLabel
