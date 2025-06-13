@@ -17,7 +17,7 @@ internal sealed class GmailLabelRepository : RepositoryBase<GmailLabel>, IGmailL
         .ToListAsync();
             
 
-    public void AddLabel(GmailLabel label) => Create(label);
+    public void AddRangeLabels(IEnumerable<GmailLabel> labels) => CreateRange(labels);
 
     public async Task<bool> CheckIfLabelExistsAsync(Guid labelId) => await
         FindByCondition(l => l.Id.Equals(labelId), trackChanges: false)

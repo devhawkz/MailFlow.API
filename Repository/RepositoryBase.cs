@@ -16,6 +16,7 @@ public class RepositoryBase<T> : IRepositoryBase<T> where T : class
 
     public void Create(T entity) => DataContext.Set<T>().Add(entity);
 
+    public void CreateRange(IEnumerable<T> entities) => DataContext.Set<T>().AddRange(entities.ToList());
 
     public void Delete(T entity) => DataContext.Set<T>().Remove(entity);
 

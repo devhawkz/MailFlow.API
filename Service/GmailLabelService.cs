@@ -54,19 +54,18 @@ internal sealed class GmailLabelService : IGmailLabelService
         var labelsIds = await _repositoryManager.GmailLabel.FindExistingLabelsIdsAsync(userId: userId, trackChanges: trackChanges);
         var existingLabelIds = labelsIds.ToHashSet();
         
-        foreach (var label in labelList.Labels)
-        {
-            if (existingLabelIds.Contains(label.Id))
-                continue;
-
-            var gmailLabel = new GmailLabel
+        var newLabels = labelList.Labels
+            .Where(label => !existingLabelIds.Contains(label.Id))
+            .Select(label => new GmailLabel
             {
                 Id = label.Id,
                 Name = label.Name,
                 Type = label.Type,
                 UserId = userId
-            };
-            _repositoryManager.GmailLabel.AddLabel(gmailLabel);
-        }
+            }).ToList();
+
+
+        if(newLabels.Any())
+            _repositoryManager.GmailLabel.AddRangeLabels(newLabels);
     }
 }

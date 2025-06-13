@@ -6,6 +6,6 @@ public interface IGmailLabelRepository
 {
     Task<IEnumerable<string>> FindExistingLabelsIdsAsync(Guid userId, bool trackChanges);
     Task<bool> CheckIfLabelExistsAsync(Guid labelId);
-    void AddLabel(GmailLabel label);
+    void AddRangeLabels(IEnumerable<GmailLabel> labels);
 
 }
