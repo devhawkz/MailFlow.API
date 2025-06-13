@@ -12,7 +12,6 @@ namespace Repository;
 public sealed class ToolsRepository : IToolsRepository
 {
    private readonly IConfiguration _config;
-   private readonly DataContext _dataContext;
 
     public ToolsRepository(IConfiguration configuration)
     {

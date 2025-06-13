@@ -66,7 +66,7 @@ namespace MailFlow.API.Controllers
         [HttpGet("labels")]
         public async Task<ActionResult<bool>> GetLabels()
         { 
-           var response = await _serviceManager.GmailLabelService.GetLabelsFromAPI(trackChanges: false);
+           var response = await _serviceManager.GmailLabelService.DownloadAndSyncLabelsAsync(trackChanges: false);
             if (!response)
                 return NotFound("No labels found.");
             return Ok();
@@ -276,16 +276,8 @@ namespace MailFlow.API.Controllers
                 format,
                 content
             });
-        }
-
-        // HELPER METHODS
-      
-
+        }      
     }
-
-    //ENTITIES
-
-
     //DTOs
     public record GmailLabelListResponse(IEnumerable<GmailLabel> Labels);
 

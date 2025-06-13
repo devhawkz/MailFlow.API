@@ -8,6 +8,6 @@ public interface IRepositoryManager
     IGmailLabelRepository GmailLabel { get; }
     IEmailMessageContentRepository EmailMessageContent { get; }
     IToolsRepository Tools { get; }
-    void Save();
+    Task SaveAsync();
 }
 

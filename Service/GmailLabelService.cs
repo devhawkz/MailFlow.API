@@ -6,6 +6,7 @@ using Shared.DTOs;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Service;
 
@@ -20,17 +21,19 @@ internal sealed class GmailLabelService : IGmailLabelService
         _toolsService = toolsService;
     }
 
-    public async Task<bool> GetLabelsFromAPI(bool trackChanges)
+    public async Task<bool> DownloadAndSyncLabelsAsync(bool trackChanges)
     {
-        var token = await _toolsService.GetUserTokenAsync();
+        var token = await _toolsService.GetUserTokenAsync(trackChanges);
+        if (token is null || string.IsNullOrWhiteSpace(token.AccessToken))
+            return false;
 
         var labelList = await GetDeserializedResponseFromApi(accessToken: token.AccessToken);
         if(labelList is null || !labelList.Labels.Any())
             return false;
 
-        AddLabelsToDb(labelList: labelList, userId: token.UserId, trackChanges: trackChanges);
+        await AddLabelsToDb(labelList: labelList, userId: token.UserId, trackChanges: trackChanges);
 
-        _repositoryManager.Save();
+        await _repositoryManager.SaveAsync();
 
         return true;
     }
@@ -46,13 +49,13 @@ internal sealed class GmailLabelService : IGmailLabelService
 
         return labelList!;
     }
-    private void AddLabelsToDb(GmailLabelListDTO labelList, Guid userId, bool trackChanges)
+    private async Task AddLabelsToDb(GmailLabelListDTO labelList, Guid userId, bool trackChanges)
     {
-        var labelsIds = _repositoryManager.GmailLabel.FindExistingLabelsIdsAsync(userId: userId, trackChanges: trackChanges);
+        var labelsIds = await _repositoryManager.GmailLabel.FindExistingLabelsIdsAsync(userId: userId, trackChanges: trackChanges);
         var existingLabelIds = labelsIds.ToHashSet();
+        
         foreach (var label in labelList.Labels)
         {
-            
             if (existingLabelIds.Contains(label.Id))
                 continue;
 
@@ -63,7 +66,7 @@ internal sealed class GmailLabelService : IGmailLabelService
                 Type = label.Type,
                 UserId = userId
             };
-            _repositoryManager.GmailLabel.AddLabelAsync(gmailLabel);
+            _repositoryManager.GmailLabel.AddLabel(gmailLabel);
         }
     }
 }

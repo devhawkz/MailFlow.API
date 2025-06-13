@@ -1,4 +1,5 @@
 ﻿using Contracts;
+using Microsoft.Extensions.Configuration;
 
 namespace Repository;
 
@@ -17,9 +18,11 @@ public sealed class RepositoryManager : IRepositoryManager
     private readonly Lazy<IEmailMessageContentRepository> _emailMessageContentRepository;
     private readonly Lazy<IToolsRepository> _toolsRepository;
 
-    public RepositoryManager(DataContext dataContext)
+    public RepositoryManager(DataContext dataContext, IConfiguration config)
     {
         _dataContext = dataContext;
+        _config = config;
+
         _googleTokenRepository = new Lazy<IGoogleTokenRepository>(() => new GoogleTokenRepository(dataContext));
         _emailMessageRepository = new Lazy<IEmailMessageRepository>(() => new EmailMessageRepository(dataContext));
         _userRepository = new Lazy<IUserRepository>(() => new UserRepository(dataContext));
@@ -40,6 +43,6 @@ public sealed class RepositoryManager : IRepositoryManager
 
     public IToolsRepository Tools => _toolsRepository.Value;
 
-    public void Save() => _dataContext.SaveChanges();
+    public Task SaveAsync() => _dataContext.SaveChangesAsync();
 
 }

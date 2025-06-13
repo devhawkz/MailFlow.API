@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 //enabling reading secrets from user secrets
 builder.Configuration.AddUserSecrets<Program>();
-builder.Services.ConfigureRepositoryManager();
+builder.Services.ConfigureRepositoryManager(builder.Configuration);
 builder.Services.ConfigureServiceManager();
 builder.Services.ConfigureSqlContext(builder.Configuration);
 builder.Services.ConfigureCors();

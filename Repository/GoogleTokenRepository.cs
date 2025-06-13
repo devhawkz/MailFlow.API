@@ -16,10 +16,10 @@ public class GoogleTokenRepository : RepositoryBase<GoogleToken>, IGoogleTokenRe
     }
     public void UpdateTokenAsync(GoogleToken token) => Update(token);
 
-    public GoogleToken GetLatestTokenForUserAsync(bool trackChanges) =>
+    public async Task<GoogleToken> GetLatestTokenForUserAsync(bool trackChanges) => await 
         FindByCondition(t => t.UserId == _userId, trackChanges)
             .OrderByDescending(t => t.ExpiresAt)
-            .SingleOrDefault()!;
+            .SingleOrDefaultAsync();
 
 }
 

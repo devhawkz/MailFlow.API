@@ -29,9 +29,9 @@ public sealed class ToolsService : IToolsService
     }
 
    
-    public async Task<GoogleToken> GetUserTokenAsync()
+    public async Task<GoogleToken> GetUserTokenAsync(bool trackChanges)
     {
-        var token = _repositoryManager.GoogleToken.GetLatestTokenForUserAsync(trackChanges: false);
+        var token = await _repositoryManager.GoogleToken.GetLatestTokenForUserAsync(trackChanges);
         if (token is null)
             return null!;
 
