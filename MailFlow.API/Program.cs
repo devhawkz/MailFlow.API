@@ -2,6 +2,8 @@ using MailFlow.API.Controllers;
 using MailFlow.API.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Repository;
+using Service;
+using Service.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,7 @@ builder.Services.ConfigureSqlContext(builder.Configuration);
 builder.Services.ConfigureCors();
 builder.Services.ConfigureToolsRepository();
 builder.Services.ConfigureToolsService();
+builder.Services.ConfigureGmailApiClient();
 
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(MailFlow.Presentation.AssemblyReference).Assembly);

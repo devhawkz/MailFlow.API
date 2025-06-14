@@ -17,7 +17,7 @@ public static class ServiceExtensions
             .AllowAnyHeader());
         });
 
-    public static void ConfigureRepositoryManager(this IServiceCollection services) =>
+    public static void ConfigureRepositoryManager(this IServiceCollection services, IConfiguration configuration) =>
         services.AddScoped<IRepositoryManager, RepositoryManager>();
 
     public static void ConfigureServiceManager(this IServiceCollection services) =>
@@ -31,5 +31,8 @@ public static class ServiceExtensions
         services.AddScoped<IToolsRepository, ToolsRepository>();
     public static void ConfigureToolsService(this IServiceCollection services) =>
         services.AddScoped<IToolsService, ToolsService>();
+
+    public static void ConfigureGmailApiClient(this IServiceCollection services) =>
+        services.AddHttpClient<IGmailApiClient, GmailApiClient>();
 }
 

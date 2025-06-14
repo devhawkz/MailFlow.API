@@ -66,7 +66,7 @@ namespace MailFlow.API.Controllers
         [HttpGet("labels")]
         public async Task<ActionResult<bool>> GetLabels()
         { 
-           var response = await _serviceManager.GmailLabelService.DownloadAndSyncLabelsAsync(trackChanges: false);
+           var response = await _serviceManager.GmailLabelService.DownloadAndSyncLabelsAsync(trackChanges: false, path: "labels");
             if (!response)
                 return NotFound("No labels found.");
             return Ok();

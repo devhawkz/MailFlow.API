@@ -2,5 +2,5 @@
 
 public interface IGmailLabelService
 {
-     Task<bool> DownloadAndSyncLabelsAsync(bool trackChanges);
+     Task<bool> DownloadAndSyncLabelsAsync(bool trackChanges, string path);
 }

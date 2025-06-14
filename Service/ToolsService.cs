@@ -3,6 +3,7 @@ using Entities.Models;
 using Newtonsoft.Json.Linq;
 using Service.Contracts;
 using Shared.DTOs;
+using System.Net.Http;
 using System.Net.Http.Headers;
 
 namespace Service;
@@ -10,24 +11,14 @@ namespace Service;
 public sealed class ToolsService : IToolsService
 {
     private readonly IRepositoryManager _repositoryManager;
-    public ToolsService(IRepositoryManager repositoryManager)
+    private readonly IGmailApiClient _httpClient;
+
+    public ToolsService(IRepositoryManager repositoryManager, IGmailApiClient httpClient)
     {
         _repositoryManager = repositoryManager;
+        _httpClient = httpClient;
     }
-    public async Task<string> GetHttpResponseBody(string path, string accessToken, string param = "")
-    {
-        using var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await httpClient.GetAsync(path);
-        if (!response.IsSuccessStatusCode)
-            return string.Empty;
-
-        var content = await response.Content.ReadAsStringAsync();
-        return content;
-    }
-
+    public async Task<Stream?> GetHttpResponseBody(string path, string accessToken) => await _httpClient.GetAsync(path, accessToken);
    
     public async Task<GoogleToken> GetUserTokenAsync(bool trackChanges)
     {
