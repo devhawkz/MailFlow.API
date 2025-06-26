@@ -1,3 +1,4 @@
+using MailFlow.API;
 using MailFlow.API.Controllers;
 using MailFlow.API.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ builder.Services.ConfigureCors();
 builder.Services.ConfigureToolsRepository();
 builder.Services.ConfigureToolsService();
 builder.Services.ConfigureGmailApiClient();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(MailFlow.Presentation.AssemblyReference).Assembly);
@@ -26,9 +28,9 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-    app.UseDeveloperExceptionPage();
-else
+app.UseExceptionHandler();
+
+if (app.Environment.IsProduction())
     app.UseHsts();
 
 app.UseHttpsRedirection();
