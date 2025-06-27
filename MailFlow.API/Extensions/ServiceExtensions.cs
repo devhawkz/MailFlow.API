@@ -1,6 +1,8 @@
 ﻿using Contracts;
+using LoggerService;
 using Microsoft.EntityFrameworkCore;
 using Repository;
+using Serilog;
 using Service;
 using Service.Contracts;
 
@@ -34,5 +36,11 @@ public static class ServiceExtensions
 
     public static void ConfigureGmailApiClient(this IServiceCollection services) =>
         services.AddHttpClient<IGmailApiClient, GmailApiClient>();
+
+    public static void ConfigureCorrelationIdMiddleware(this IServiceCollection services) =>
+        services.AddTransient<CorrelationIdMiddleware>();
+
+    public static void ConfigureLoggerManager(this IServiceCollection services) => services.AddScoped(typeof(ILoggerManager), typeof(LoggerManager<>));
+
 }
 

@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailFlow.Presentation", "Ma
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{4ABF7279-51AB-45D4-AC50-36B1F54005E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoggerService", "LoggerService\LoggerService.csproj", "{E8C30CE6-7078-43A9-A257-5C89D5FDD168}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{4ABF7279-51AB-45D4-AC50-36B1F54005E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4ABF7279-51AB-45D4-AC50-36B1F54005E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4ABF7279-51AB-45D4-AC50-36B1F54005E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8C30CE6-7078-43A9-A257-5C89D5FDD168}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8C30CE6-7078-43A9-A257-5C89D5FDD168}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8C30CE6-7078-43A9-A257-5C89D5FDD168}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8C30CE6-7078-43A9-A257-5C89D5FDD168}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
