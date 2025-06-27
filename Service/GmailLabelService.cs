@@ -54,13 +54,20 @@ internal sealed class GmailLabelService : IGmailLabelService
 
     private async Task<GmailLabelListDTO> GetDeserializedResponseFromApi(string accessToken, string path)
     {
+        _logger.LogDebug("Fetching Gmail API response for path: {Path}", path);
+
         var content = await _toolsService.GetHttpResponseBody(path: path, accessToken: accessToken);
         if (string.IsNullOrEmpty(content) || string.IsNullOrWhiteSpace(content))
+        {
+            _logger.LogDebug("Gmail API response is empty for path: {Path}", path);
             return new GmailLabelListDTO(Enumerable.Empty<GmailLabelDTO>());
+        } 
 
         var labelList = JsonSerializer.Deserialize<GmailLabelListDTO>(
             content, 
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        _logger.LogDebug("Deserialization completed for Gmail labels.");
 
         return labelList!;
     }
