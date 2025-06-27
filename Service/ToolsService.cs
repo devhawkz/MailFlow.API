@@ -24,7 +24,7 @@ public sealed class ToolsService : IToolsService
     {
         var token = await _repositoryManager.GoogleToken.GetLatestTokenForUserAsync(trackChanges);
         if (token is null)
-            return null!;
+            return null!; // problem
 
         if (token.ExpiresAt < DateTime.UtcNow)
         {
@@ -32,7 +32,7 @@ public sealed class ToolsService : IToolsService
             await credential.RefreshTokenAsync(CancellationToken.None);
 
             token = _repositoryManager.Tools.RefreshToken(credential, token);
-            _repositoryManager.GoogleToken.UpdateTokenAsync(token);
+            _repositoryManager.GoogleToken.UpdateToken(token);
         }
 
         return token;

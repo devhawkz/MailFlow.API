@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Service.Contracts;
 using Shared.DTOs;
+using Shared.Responses;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -31,12 +32,18 @@ public class GmailController : ControllerBase
 
     
     [HttpGet("labels")]
-    public async Task<ActionResult<bool>> GetLabels()
+    public async Task<ActionResult<ApiResponse<GmailLabelListDTO>>> GetLabels()
     {
         var response = await _serviceManager.GmailLabelService.DownloadAndSyncLabelsAsync(trackChanges: false, path: "labels");
-        if (!response)
-            return NotFound("No labels found.");
-        return Ok();
+
+        return response.StatusCode switch
+        {
+            200 => Ok(response),
+            204 => NoContent(),
+            401 => Unauthorized(response.Message),
+            _ => StatusCode(response.StatusCode, response.Message)
+        };
+
     }
     /*
     [HttpGet("emails/{labelId}")]

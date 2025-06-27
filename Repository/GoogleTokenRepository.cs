@@ -14,7 +14,7 @@ public class GoogleTokenRepository : RepositoryBase<GoogleToken>, IGoogleTokenRe
     {
         
     }
-    public void UpdateTokenAsync(GoogleToken token) => Update(token);
+    public void UpdateToken(GoogleToken token) =>  Update(token);
 
     public async Task<GoogleToken> GetLatestTokenForUserAsync(bool trackChanges) => await 
         FindByCondition(t => t.UserId == _userId, trackChanges)

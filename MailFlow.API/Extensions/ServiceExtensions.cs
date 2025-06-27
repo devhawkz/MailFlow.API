@@ -35,7 +35,9 @@ public static class ServiceExtensions
         services.AddScoped<IToolsService, ToolsService>();
 
     public static void ConfigureGmailApiClient(this IServiceCollection services) =>
-        services.AddHttpClient<IGmailApiClient, GmailApiClient>();
+        services.AddHttpClient<IGmailApiClient, GmailApiClient>(client =>
+            client.BaseAddress = new Uri("https://gmail.googleapis.com/gmail/v1/users/me/")
+        );
 
     public static void ConfigureCorrelationIdMiddleware(this IServiceCollection services) =>
         services.AddTransient<CorrelationIdMiddleware>();

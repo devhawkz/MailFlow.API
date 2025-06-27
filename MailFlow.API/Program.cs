@@ -31,8 +31,6 @@ builder.Services.ConfigureGmailApiClient();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.ConfigureCorrelationIdMiddleware();
 
-builder.Services.ConfigureLoggerManager();
-
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(MailFlow.Presentation.AssemblyReference).Assembly);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

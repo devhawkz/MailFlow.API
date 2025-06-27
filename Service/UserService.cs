@@ -49,7 +49,7 @@ internal sealed class UserService : IUserService
             };
         }
 
-        _repositoryManager.GoogleToken.UpdateTokenAsync(userToken!);
+        _repositoryManager.GoogleToken.UpdateToken(userToken!);
         await _repositoryManager.SaveAsync();
 
     }

@@ -15,8 +15,6 @@ public class GmailApiClient : IGmailApiClient
     public GmailApiClient(HttpClient httpClient, ILoggerManager logger)
     {
         _httpClient = httpClient;
-
-        _httpClient.BaseAddress = new Uri("https://gmail.googleapis.com/gmail/v1/users/me/");
         _logger = logger;
     }
 

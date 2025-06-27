@@ -3,11 +3,13 @@ using Entities.Models;
 using Google.Apis.Auth.OAuth2;
 using Service.Contracts;
 using Shared.DTOs;
+using Shared.Responses;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
+using static Google.Apis.Requests.BatchRequest;
 
 namespace Service;
 
@@ -24,7 +26,7 @@ internal sealed class GmailLabelService : IGmailLabelService
         _logger = logger;
     }
 
-    public async Task<bool> DownloadAndSyncLabelsAsync(bool trackChanges, string path)
+    public async Task<ApiResponse<GmailLabelListDTO>> DownloadAndSyncLabelsAsync(bool trackChanges, string path)
     {
         _logger.LogInfo("Starting Gmail labels download and synchronization.");
         
@@ -32,7 +34,12 @@ internal sealed class GmailLabelService : IGmailLabelService
         if (token is null || string.IsNullOrWhiteSpace(token.AccessToken))
         {
             _logger.LogWarn("No valid access token found. Aborting sync.");
-            return false;
+            
+            return ApiResponse<GmailLabelListDTO>.Error(
+                statusCode: 401,
+                message: "No valid access token found. Aborting sync.",
+                result: new GmailLabelListDTO(new List<GmailLabelDTO>()));
+
         }
             
 
@@ -40,7 +47,10 @@ internal sealed class GmailLabelService : IGmailLabelService
         if(labelList is null || labelList.Labels is null || !labelList.Labels.Any())
         {
             _logger.LogInfo("No labels found in Gmail API response. Nothing to sync.");
-            return false;
+            return ApiResponse<GmailLabelListDTO>.Ok(
+                statusCode: 200,
+                message: "No labels found in Gmail API response. Nothing to sync.",
+                result: new GmailLabelListDTO(new List<GmailLabelDTO>()));
         }
 
         await AddLabelsToDb(labelList: labelList, userId: token.UserId, trackChanges: trackChanges);
@@ -48,8 +58,12 @@ internal sealed class GmailLabelService : IGmailLabelService
         await _repositoryManager.SaveAsync();
         
         _logger.LogInfo("Successfully synced {Count} labels for UserId: {UserId}.", labelList.Labels.Count(), token.UserId);
-        
-        return true;
+
+        return ApiResponse<GmailLabelListDTO>.Ok(
+            result: labelList,
+            statusCode: 200,
+            message: $"Successfully synced {labelList.Labels.Count()} labels for UserId: {token.UserId}."
+        );
     }
 
     private async Task<GmailLabelListDTO> GetDeserializedResponseFromApi(string accessToken, string path)
@@ -73,11 +87,10 @@ internal sealed class GmailLabelService : IGmailLabelService
     }
     private async Task AddLabelsToDb(GmailLabelListDTO labelList, Guid userId, bool trackChanges)
     {
-        var labelsIds = await _repositoryManager.GmailLabel.FindExistingLabelsIdsAsync(userId: userId, trackChanges: trackChanges);
-        var existingLabelIds = labelsIds.ToHashSet();
-        
+        var labelsIds = (await _repositoryManager.GmailLabel.FindExistingLabelsIdsAsync(userId: userId, trackChanges: trackChanges)).ToHashSet();
+
         var newLabels = labelList.Labels
-            .Where(label => !existingLabelIds.Contains(label.Id))
+            .Where(label => !labelsIds.Contains(label.Id))
             .Select(label => new GmailLabel
             {
                 Id = label.Id,

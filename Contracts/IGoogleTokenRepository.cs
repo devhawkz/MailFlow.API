@@ -5,5 +5,5 @@ namespace Contracts;
 public interface IGoogleTokenRepository
 {
     Task<GoogleToken> GetLatestTokenForUserAsync(bool trackChanges);
-    void UpdateTokenAsync(GoogleToken token);
+    void UpdateToken(GoogleToken token);
 }
