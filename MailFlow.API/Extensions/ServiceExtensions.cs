@@ -40,7 +40,7 @@ public static class ServiceExtensions
     public static void ConfigureCorrelationIdMiddleware(this IServiceCollection services) =>
         services.AddTransient<CorrelationIdMiddleware>();
 
-    public static void ConfigureLoggerManager(this IServiceCollection services) => services.AddScoped(typeof(ILoggerManager), typeof(LoggerManager<>));
+    public static void ConfigureLoggerManager(this IServiceCollection services) => services.AddScoped<ILoggerManager, LoggerManager>();
 
 }
 

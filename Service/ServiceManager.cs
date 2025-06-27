@@ -1,4 +1,5 @@
 ﻿using Contracts;
+using Microsoft.Extensions.Configuration;
 using Service.Contracts;
 
 namespace Service;
@@ -12,13 +13,17 @@ public sealed class ServiceManager : IServiceManager
     private readonly Lazy<IGmailLabelService> _gmailLabelService;
 
     private readonly IToolsService _toolsService;
-    public ServiceManager(IRepositoryManager repositoryManager, IToolsService toolsService)
+    private readonly IConfiguration _configuration;
+    private readonly ILoggerManager _logger;
+    public ServiceManager(IRepositoryManager repositoryManager, IToolsService toolsService, IConfiguration configuration, ILoggerManager logger)
     {
-       
-        _emailMessageService = new Lazy<IEmailMessageService>(() => new EmailMessageService(repositoryManager));
-        _userService = new Lazy<IUserService>(() => new UserService(repositoryManager));
         _toolsService = toolsService;
-        _gmailLabelService = new Lazy<IGmailLabelService>(() => new GmailLabelService(repositoryManager,_toolsService));
+        _configuration = configuration;
+        _logger = logger;
+
+        _emailMessageService = new Lazy<IEmailMessageService>(() => new EmailMessageService(repositoryManager));
+        _userService = new Lazy<IUserService>(() => new UserService(repositoryManager, _configuration));
+        _gmailLabelService = new Lazy<IGmailLabelService>(() => new GmailLabelService(repositoryManager, _toolsService, _logger));
 
 
     }

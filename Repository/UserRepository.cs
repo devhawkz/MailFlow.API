@@ -1,5 +1,6 @@
 ﻿using Contracts;
 using Entities.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Repository;
 
@@ -9,7 +10,8 @@ public class UserRepository : RepositoryBase<User>, IUserRepository
     {
     }
 
-    
-    
+    public async Task<Guid> GetUserIdAsync(bool trackChanges) => await FindAll(trackChanges)
+        .Select(u => u.Id)
+        .FirstOrDefaultAsync();
 }
 

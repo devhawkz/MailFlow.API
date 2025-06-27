@@ -15,37 +15,51 @@ internal sealed class GmailLabelService : IGmailLabelService
 {
     private readonly IRepositoryManager _repositoryManager;
     private readonly IToolsService _toolsService;
+    private readonly ILoggerManager _logger;
 
-    public GmailLabelService(IRepositoryManager repositoryManager, IToolsService toolsService)
+    public GmailLabelService(IRepositoryManager repositoryManager, IToolsService toolsService, ILoggerManager logger)
     {
         _repositoryManager = repositoryManager;
         _toolsService = toolsService;
+        _logger = logger;
     }
 
     public async Task<bool> DownloadAndSyncLabelsAsync(bool trackChanges, string path)
     {
+        _logger.LogInfo("Starting Gmail labels download and synchronization.");
+        
         var token = await _toolsService.GetUserTokenAsync(trackChanges);
         if (token is null || string.IsNullOrWhiteSpace(token.AccessToken))
+        {
+            _logger.LogWarn("No valid access token found. Aborting sync.");
             return false;
+        }
+            
 
         var labelList = await GetDeserializedResponseFromApi(accessToken: token.AccessToken, path: path);
         if(labelList is null || labelList.Labels is null || !labelList.Labels.Any())
+        {
+            _logger.LogInfo("No labels found in Gmail API response. Nothing to sync.");
             return false;
+        }
 
         await AddLabelsToDb(labelList: labelList, userId: token.UserId, trackChanges: trackChanges);
 
         await _repositoryManager.SaveAsync();
-
+        
+        _logger.LogInfo("Successfully synced {Count} labels for UserId: {UserId}.", labelList.Labels.Count(), token.UserId);
+        
         return true;
     }
 
     private async Task<GmailLabelListDTO> GetDeserializedResponseFromApi(string accessToken, string path)
     {
         var content = await _toolsService.GetHttpResponseBody(path: path, accessToken: accessToken);
-        if (content == Stream.Null || content.Length == 0)
+        if (string.IsNullOrEmpty(content) || string.IsNullOrWhiteSpace(content))
             return new GmailLabelListDTO(Enumerable.Empty<GmailLabelDTO>());
 
-        var labelList = await JsonSerializer.DeserializeAsync<GmailLabelListDTO>(content,
+        var labelList = JsonSerializer.Deserialize<GmailLabelListDTO>(
+            content, 
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         return labelList!;

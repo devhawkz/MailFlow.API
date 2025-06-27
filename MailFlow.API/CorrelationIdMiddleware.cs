@@ -4,7 +4,7 @@ using Serilog.Context;
 
 namespace MailFlow.API
 {
-    public class CorrelationIdMiddleware(RequestDelegate next) : IMiddleware
+    public class CorrelationIdMiddleware : IMiddleware
     {
         private const string CorrelationIdHeader = "X-Correlation-ID";
      

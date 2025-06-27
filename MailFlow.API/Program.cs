@@ -17,9 +17,10 @@ Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
     .CreateLogger();
+
 builder.Host.UseSerilog();
 
-
+builder.Services.ConfigureLoggerManager();
 builder.Services.ConfigureRepositoryManager(builder.Configuration);
 builder.Services.ConfigureServiceManager();
 builder.Services.ConfigureSqlContext(builder.Configuration);
@@ -28,7 +29,7 @@ builder.Services.ConfigureToolsRepository();
 builder.Services.ConfigureToolsService();
 builder.Services.ConfigureGmailApiClient();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
+builder.Services.ConfigureCorrelationIdMiddleware();
 
 builder.Services.ConfigureLoggerManager();
 
@@ -58,7 +59,7 @@ app.UseAuthorization();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging();
 
-app.UseExceptionHandler();
+app.UseExceptionHandler(opt => { });
 
 app.MapControllers();
 

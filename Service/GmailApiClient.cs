@@ -17,7 +17,7 @@ public class GmailApiClient : IGmailApiClient
         _httpClient.BaseAddress = new Uri("https://gmail.googleapis.com/gmail/v1/users/me/");
     }
 
-    public async Task<Stream?> GetAsync(string path, string accessToken)
+    public async Task<string?> GetAsync(string path, string accessToken)
     {
        var request = new HttpRequestMessage(HttpMethod.Get, path);
        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -25,12 +25,12 @@ public class GmailApiClient : IGmailApiClient
 
         var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
         if (!response.IsSuccessStatusCode)
-            return Stream.Null;
+            return string.Empty;
 
-        var content = await response.Content.ReadAsStreamAsync();
-        return content is null || content.Length == 0
-            ? Stream.Null
-            : content;
+        var content = await response.Content.ReadAsStringAsync();
+        return content is not null
+            ? content
+            : string.Empty;
     }
 }
 

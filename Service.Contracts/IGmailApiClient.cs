@@ -2,5 +2,5 @@
 
 public interface IGmailApiClient
 {
-    Task<Stream?> GetAsync(string path, string accessToken);
+    Task<string?> GetAsync(string path, string accessToken);
 }

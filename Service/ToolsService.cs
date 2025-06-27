@@ -18,7 +18,7 @@ public sealed class ToolsService : IToolsService
         _repositoryManager = repositoryManager;
         _httpClient = httpClient;
     }
-    public async Task<Stream?> GetHttpResponseBody(string path, string accessToken) => await _httpClient.GetAsync(path, accessToken);
+    public async Task<string?> GetHttpResponseBody(string path, string accessToken) => await _httpClient.GetAsync(path, accessToken);
    
     public async Task<GoogleToken> GetUserTokenAsync(bool trackChanges)
     {

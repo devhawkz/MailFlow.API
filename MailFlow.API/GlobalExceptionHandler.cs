@@ -7,11 +7,7 @@ namespace MailFlow.API
 {
     public class GlobalExceptionHandler : IExceptionHandler
     {
-        private readonly ILoggerManager _logger;
-        public GlobalExceptionHandler(ILoggerManager logger)
-        {
-            _logger = logger;
-        }
+        
 
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
@@ -21,7 +17,7 @@ namespace MailFlow.API
             var contextFeature = httpContext.Features.Get<IExceptionHandlerFeature>();
             if (contextFeature is not null)
             {
-                _logger.LogError($"Something went wrong: {exception.Message}");
+                //_logger.LogError($"Something went wrong: {exception.Message}");
                 
                 await httpContext.Response.WriteAsync(new ErrorDetails()
                 {

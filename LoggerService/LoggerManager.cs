@@ -3,10 +3,10 @@ using Microsoft.Extensions.Logging;
 
 namespace LoggerService;
 
-public class LoggerManager<T> : ILoggerManager
+public class LoggerManager : ILoggerManager
 {
-    private readonly ILogger<T> _logger;
-    public LoggerManager(ILogger<T> logger)
+    private readonly ILogger<LoggerManager> _logger;
+    public LoggerManager(ILogger<LoggerManager> logger)
     {
         _logger = logger;
     }

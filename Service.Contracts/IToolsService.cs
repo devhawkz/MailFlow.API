@@ -6,6 +6,6 @@ namespace Service.Contracts;
 
 public interface IToolsService
 {
-    Task<Stream> GetHttpResponseBody(string path, string accessToken);
+    Task<string?> GetHttpResponseBody(string path, string accessToken);
     Task<GoogleToken> GetUserTokenAsync(bool trackChanges);
 }
