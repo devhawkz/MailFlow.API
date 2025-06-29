@@ -13,11 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 //enabling reading secrets from user secrets
 builder.Configuration.AddUserSecrets<Program>();
 
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .Enrich.FromLogContext()
-    .CreateLogger();
-
+builder.Services.ConfigureSerilog(builder.Configuration);
 builder.Host.UseSerilog();
 
 builder.Services.ConfigureLoggerManager();
@@ -30,6 +26,7 @@ builder.Services.ConfigureToolsService();
 builder.Services.ConfigureGmailApiClient();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.ConfigureCorrelationIdMiddleware();
+builder.Services.ConfigureSwagger();
 
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(MailFlow.Presentation.AssemblyReference).Assembly);
@@ -49,6 +46,12 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+if(app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(s => s.SwaggerEndpoint("/swagger/v1/swagger.json", "MailFlow API v1"));
+}
 
 app.UseCors("CorsPolicy");
 

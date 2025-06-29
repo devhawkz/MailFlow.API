@@ -5,6 +5,7 @@ using Repository;
 using Serilog;
 using Service;
 using Service.Contracts;
+using Microsoft.OpenApi.Models;
 
 namespace MailFlow.API.Extensions;
 
@@ -41,8 +42,33 @@ public static class ServiceExtensions
 
     public static void ConfigureCorrelationIdMiddleware(this IServiceCollection services) =>
         services.AddTransient<CorrelationIdMiddleware>();
-
     public static void ConfigureLoggerManager(this IServiceCollection services) => services.AddScoped<ILoggerManager, LoggerManager>();
 
-}
+    public static void ConfigureSerilog(this IServiceCollection services, IConfiguration configuration)
+    {
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration)
+            .Enrich.FromLogContext()
+            .CreateLogger();
+        services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
+    }
 
+    public static void ConfigureSwagger(this IServiceCollection services)
+    {
+        services.AddSwaggerGen(s =>
+        {
+            s.SwaggerDoc("v1", new OpenApiInfo 
+            { 
+                Title = "MailFlow Api", 
+                Version = "v1",
+                Description = "API for MailFlow application",
+                Contact = new OpenApiContact
+                {
+                    Name = "Pavle Jovanovic",
+                    Email = "pavlejovanovic34@gmail.com"
+                }
+            });
+        });
+    }
+
+}
