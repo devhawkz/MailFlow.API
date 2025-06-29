@@ -10,8 +10,10 @@ public class UserRepository : RepositoryBase<User>, IUserRepository
     {
     }
 
-    public async Task<Guid> GetUserIdAsync(bool trackChanges) => await FindAll(trackChanges)
-        .Select(u => u.Id)
-        .FirstOrDefaultAsync();
+    public async Task<Guid> GetUserIdAsync(bool trackChanges) => 
+        await FindAll(trackChanges)
+            .OrderBy(u => u.Id)
+            .Select(u => u.Id)
+            .FirstOrDefaultAsync();
 }
 
