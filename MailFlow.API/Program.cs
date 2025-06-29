@@ -28,8 +28,11 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.ConfigureCorrelationIdMiddleware();
 builder.Services.ConfigureSwagger();
 
-builder.Services.AddControllers()
-    .AddApplicationPart(typeof(MailFlow.Presentation.AssemblyReference).Assembly);
+builder.Services.AddControllers(config =>
+    {
+        config.ReturnHttpNotAcceptable = true;
+    })
+ .AddApplicationPart(typeof(MailFlow.Presentation.AssemblyReference).Assembly);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
