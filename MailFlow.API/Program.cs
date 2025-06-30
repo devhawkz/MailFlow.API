@@ -1,16 +1,11 @@
 using MailFlow.API;
-using MailFlow.API.Controllers;
 using MailFlow.API.Extensions;
-using Microsoft.EntityFrameworkCore;
-using Repository;
 using Serilog;
-using Service;
-using Service.Contracts;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-//enabling reading secrets from user secrets
 builder.Configuration.AddUserSecrets<Program>();
 
 builder.Services.ConfigureSerilog(builder.Configuration);
@@ -28,11 +23,8 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.ConfigureCorrelationIdMiddleware();
 builder.Services.ConfigureSwagger();
 
-builder.Services.AddControllers(config =>
-    {
-        config.ReturnHttpNotAcceptable = true;
-    })
- .AddApplicationPart(typeof(MailFlow.Presentation.AssemblyReference).Assembly);
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof(MailFlow.Presentation.AssemblyReference).Assembly);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

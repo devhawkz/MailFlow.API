@@ -6,5 +6,5 @@ namespace Service.Contracts;
 
 public interface IGmailLabelService
 {
-     Task<ApiResponse<GmailLabelListDTO>> DownloadAndSyncLabelsAsync(bool trackChanges, string path);
+     Task<ApiBaseResponse> DownloadAndSyncLabelsAsync(bool trackChanges, string path);
 }

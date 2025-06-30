@@ -9,7 +9,7 @@ public sealed class ApiResponse<TResult> : ApiBaseResponse
         Result = result;
     }
 
-    public static ApiResponse<TResult> Ok(TResult result, int statusCode = 200, string message = "Success")
+    public static ApiResponse<TResult> Ok(TResult? result = default, int statusCode = 200, string message = "Success")
         => new ApiResponse<TResult>(result!, statusCode, true, message);
 
 

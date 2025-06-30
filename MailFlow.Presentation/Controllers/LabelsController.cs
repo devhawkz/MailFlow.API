@@ -28,13 +28,13 @@ public class LabelsController : ControllerBase
     public async Task<IActionResult> Authorize()
     {
         await _serviceManager.UserService.AuthorizeUser();
-        return Ok();
+        return RedirectToAction("SyncLabels");
     }
 
     [HttpOptions]
     public IActionResult LabelsOptions()
     {
-        Response.Headers["Allow"] = "POST, OPTIONS, GET, DELETE";
+        Response.Headers["Allow"] = "OPTIONS,GET";
         return Ok();
     }
 
@@ -45,7 +45,7 @@ public class LabelsController : ControllerBase
     [ProducesResponseType(401)]
     [ProducesResponseType(404)]
     [HttpPost("sync-labels")]
-    public async Task<ActionResult<ApiResponse<GmailLabelListDTO>>> SyncLabels()
+    public async Task<ActionResult<ApiBaseResponse>> SyncLabels()
     {
         var response = await _serviceManager.GmailLabelService.DownloadAndSyncLabelsAsync(trackChanges: false, path: "labels");
 

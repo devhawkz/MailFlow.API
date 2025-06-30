@@ -42,16 +42,16 @@ public static class ServiceExtensions
 
     public static void ConfigureCorrelationIdMiddleware(this IServiceCollection services) =>
         services.AddTransient<CorrelationIdMiddleware>();
-    public static void ConfigureLoggerManager(this IServiceCollection services) => services.AddScoped<ILoggerManager, LoggerManager>();
-
     public static void ConfigureSerilog(this IServiceCollection services, IConfiguration configuration)
     {
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
             .CreateLogger();
-        services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
+        //services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
     }
+
+    public static void ConfigureLoggerManager(this IServiceCollection services) => services.AddScoped<ILoggerManager, LoggerManager>();
 
     public static void ConfigureSwagger(this IServiceCollection services)
     {

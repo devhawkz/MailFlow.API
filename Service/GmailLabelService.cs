@@ -26,7 +26,7 @@ internal sealed class GmailLabelService : IGmailLabelService
         _logger = logger;
     }
 
-    public async Task<ApiResponse<GmailLabelListDTO>> DownloadAndSyncLabelsAsync(bool trackChanges, string path)
+    public async Task<ApiBaseResponse> DownloadAndSyncLabelsAsync(bool trackChanges, string path)
     {
         _logger.LogInfo("Starting Gmail labels download and synchronization.");
         
@@ -34,11 +34,11 @@ internal sealed class GmailLabelService : IGmailLabelService
         if (token is null || string.IsNullOrWhiteSpace(token.AccessToken))
         {
             _logger.LogWarn("No valid access token found. Aborting sync.");
-            
+
             return ApiResponse<GmailLabelListDTO>.Error(
                 statusCode: 401,
-                message: "No valid access token found. Aborting sync.",
-                result: new GmailLabelListDTO(new List<GmailLabelDTO>()));
+                message: "No valid access token found. Aborting sync."
+                );
 
         }
             
@@ -49,8 +49,8 @@ internal sealed class GmailLabelService : IGmailLabelService
             _logger.LogInfo("No labels found in Gmail API response. Nothing to sync.");
             return ApiResponse<GmailLabelListDTO>.Ok(
                 statusCode: 200,
-                message: "No labels found in Gmail API response. Nothing to sync.",
-                result: new GmailLabelListDTO(new List<GmailLabelDTO>()));
+                message: "No labels found in Gmail API response. Nothing to sync."
+                );
         }
 
         await AddLabelsToDb(labelList: labelList, userId: token.UserId, trackChanges: trackChanges);
@@ -60,7 +60,6 @@ internal sealed class GmailLabelService : IGmailLabelService
         _logger.LogInfo("Successfully synced {Count} labels for UserId: {UserId}.", labelList.Labels.Count(), token.UserId);
 
         return ApiResponse<GmailLabelListDTO>.Ok(
-            result: labelList,
             statusCode: 200,
             message: $"Successfully synced {labelList.Labels.Count()} labels for UserId: {token.UserId}."
         );
